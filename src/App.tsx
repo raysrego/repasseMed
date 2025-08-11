@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, FileText, Database, Stethoscope, LogOut, User, UserCheck, Building } from 'lucide-react';
+import { Activity, FileText, Database, Stethoscope, LogOut, User, UserCheck, Building, Building2 } from 'lucide-react';
 import { ProducaoMensalComponent } from './components/ProducaoMensal';
 import { RepasseComponent } from './components/Repasse';
 import { MedicosCadastro } from './components/Cadastros/MedicosCadastro';
 import { ConveniosCadastro } from './components/Cadastros/ConveniosCadastro';
+import { HospitaisCadastro } from './components/Cadastros/HospitaisCadastro';
 import { DatabaseSetup } from './components/DatabaseSetup';
 import { AuthProvider, useAuth } from './components/Auth/AuthContext';
 import { LoginForm } from './components/Auth/LoginForm';
 import { supabase } from './lib/supabase';
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<'producao' | 'repasse' | 'medicos' | 'convenios'>('producao');
+  const [activeTab, setActiveTab] = useState<'producao' | 'repasse' | 'medicos' | 'convenios' | 'hospitais'>('producao');
   const [supabaseConnected, setSupabaseConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user, signOut } = useAuth();
@@ -164,6 +165,17 @@ function AppContent() {
               <Building size={20} />
               Convênios
             </button>
+            <button
+              onClick={() => setActiveTab('hospitais')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
+                activeTab === 'hospitais'
+                  ? 'border-blue-500 text-blue-600 bg-blue-50 rounded-t-lg px-4'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Building2 size={20} />
+              Hospitais
+            </button>
           </nav>
         </div>
       </div>
@@ -174,6 +186,7 @@ function AppContent() {
         {activeTab === 'repasse' && <RepasseComponent />}
         {activeTab === 'medicos' && <MedicosCadastro />}
         {activeTab === 'convenios' && <ConveniosCadastro />}
+        {activeTab === 'hospitais' && <HospitaisCadastro />}
       </div>
     </div>
   );

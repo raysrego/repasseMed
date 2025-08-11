@@ -92,6 +92,23 @@ export const dbHelpers = {
     return { data, error };
   },
 
+  async updateHospital(id: number, hospital: Omit<any, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('hospitais')
+      .update(hospital)
+      .eq('id', id)
+      .select();
+    return { data, error };
+  },
+
+  async deleteHospital(id: number) {
+    const { data, error } = await supabase
+      .from('hospitais')
+      .delete()
+      .eq('id', id);
+    return { data, error };
+  },
+
   // Produção Mensal
   async getProducaoMensal() {
     const { data, error } = await supabase

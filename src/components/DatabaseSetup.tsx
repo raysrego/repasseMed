@@ -9,10 +9,6 @@ export const DatabaseSetup: React.FC = () => {
   const setupDatabase = async () => {
     setLoading(true);
     try {
-      // Create sample hospitals
-      await dbHelpers.createHospital({ nome: 'Hospital São Lucas', cidade: 'São Paulo' });
-      await dbHelpers.createHospital({ nome: 'Hospital Albert Einstein', cidade: 'São Paulo' });
-      
       setSetupComplete(true);
     } catch (error) {
       console.error('Erro ao configurar dados:', error);
@@ -49,14 +45,14 @@ export const DatabaseSetup: React.FC = () => {
         Configuração Inicial do Banco de Dados
       </h3>
       <p className="text-blue-700 mb-6 text-lg">
-        Clique no botão abaixo para criar dados de exemplo (hospitais).
+        Clique no botão abaixo para finalizar a configuração inicial.
       </p>
       <button
         onClick={setupDatabase}
         disabled={loading}
         className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
       >
-        {loading ? 'Configurando...' : 'Configurar Dados Iniciais'}
+        {loading ? 'Configurando...' : 'Finalizar Configuração'}
       </button>
       
       <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg">
@@ -65,7 +61,7 @@ export const DatabaseSetup: React.FC = () => {
           <span className="text-sm font-medium">Importante:</span>
         </div>
         <p className="text-sm text-yellow-700 mt-1">
-          Certifique-se de ter conectado ao Supabase usando o botão "Connect to Supabase" no canto superior direito antes de prosseguir. Use as abas "Médicos" e "Convênios" para cadastrar os dados necessários.
+          Certifique-se de ter conectado ao Supabase usando o botão "Connect to Supabase" no canto superior direito antes de prosseguir. Use as abas "Médicos", "Convênios" e "Hospitais" para cadastrar os dados necessários.
         </p>
       </div>
     </div>
