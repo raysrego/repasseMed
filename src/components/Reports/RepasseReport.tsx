@@ -304,6 +304,9 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit,
                 {activeTab === 'convenio' && (
                   <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Convênio</th>
                 )}
+                {activeTab === 'convenio' && (
+                  <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Tipo</th>
+                )}
                 {activeTab === 'particular' && (
                   <th className="px-6 py-4 text-left text-sm font-bold text-purple-800">Tipo</th>
                 )}
@@ -338,7 +341,7 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit,
                 </tr>
               ) : filteredRepasses.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
                       <CreditCard className="h-12 w-12 text-gray-300" />
                       <span className="text-lg font-medium">Nenhum registro encontrado</span>
@@ -372,6 +375,27 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit,
                           </div>
                           <span className="font-medium text-gray-700">{repasse.convenio?.nome}</span>
                         </div>
+                      </td>
+                    )}
+                    {activeTab === 'convenio' && (
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                          repasse.tipo === 'cirurgia' 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {repasse.tipo === 'cirurgia' ? (
+                            <>
+                              <Scissors size={12} className="print:hidden" />
+                              Cirurgia
+                            </>
+                          ) : (
+                            <>
+                              <Stethoscope size={12} className="print:hidden" />
+                              Consulta
+                            </>
+                          )}
+                        </span>
                       </td>
                     )}
                     {activeTab === 'particular' && (
