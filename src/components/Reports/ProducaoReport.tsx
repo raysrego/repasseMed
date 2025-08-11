@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, User, Calendar, DollarSign, Building, Edit, Trash2, Plus, Filter, Printer, TrendingUp } from 'lucide-react';
+import { FileText, User, Calendar, DollarSign, Building, Edit, Trash2, Plus, Filter, Printer, TrendingUp, Stethoscope, Scissors } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../../types';
 import { supabase } from '../../lib/supabase';
@@ -261,6 +261,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Médico</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Convênio</th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Tipo</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Paciente</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Data Atendimento</th>
                 <th className="px-6 py-4 text-left text-sm font-bold text-blue-800">Valor</th>
@@ -279,7 +280,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                 </tr>
               ) : filteredProducoes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
                       <FileText className="h-12 w-12 text-gray-300" />
                       <span className="text-lg font-medium">Nenhum registro encontrado</span>
@@ -310,6 +311,25 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                         </div>
                         <span className="font-medium text-gray-700">{producao.convenio?.nome}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                        producao.tipo === 'cirurgia' 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {producao.tipo === 'cirurgia' ? (
+                          <>
+                            <Scissors size={12} className="print:hidden" />
+                            Cirurgia
+                          </>
+                        ) : (
+                          <>
+                            <Stethoscope size={12} className="print:hidden" />
+                            Consulta
+                          </>
+                        )}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-medium text-gray-900">{producao.nome_paciente}</span>

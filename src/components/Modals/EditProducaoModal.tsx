@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, FileText } from 'lucide-react';
+import { X, Save, FileText, Stethoscope, Scissors } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../../types';
 
@@ -24,7 +24,8 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
     convenio_id: '',
     nome_paciente: '',
     data_consulta: '',
-    valor: ''
+    valor: '',
+    tipo: 'consulta' as 'consulta' | 'cirurgia'
   });
 
   useEffect(() => {
@@ -36,7 +37,8 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
           convenio_id: producao.convenio_id.toString(),
           nome_paciente: producao.nome_paciente,
           data_consulta: producao.data_consulta,
-          valor: producao.valor.toString()
+          valor: producao.valor.toString(),
+          tipo: producao.tipo
         });
       }
     }
@@ -67,7 +69,8 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
         convenio_id: parseInt(formData.convenio_id),
         nome_paciente: formData.nome_paciente,
         data_consulta: formData.data_consulta,
-        valor: parseFloat(formData.valor)
+        valor: parseFloat(formData.valor),
+        tipo: formData.tipo
       });
 
       if (!result.error) {
@@ -133,6 +136,21 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
                 {convenios.map(convenio => (
                   <option key={convenio.id} value={convenio.id}>{convenio.nome}</option>
                 ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de Atendimento
+              </label>
+              <select
+                value={formData.tipo}
+                onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="consulta">🩺 Consulta</option>
+                <option value="cirurgia">✂️ Cirurgia</option>
               </select>
             </div>
 

@@ -25,6 +25,7 @@ export interface ProducaoMensal {
   nome_paciente: string;
   data_consulta: string;
   valor: number;
+  tipo: 'consulta' | 'cirurgia';
   created_at?: string;
   medico?: Medico;
   convenio?: Convenio;

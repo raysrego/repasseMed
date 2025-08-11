@@ -284,6 +284,23 @@ export const RepasseComponent: React.FC = () => {
             {activeTab === 'convenio' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de Atendimento
+                </label>
+                <select
+                  value={formData.tipo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  required
+                >
+                  <option value="consulta">🩺 Consulta</option>
+                  <option value="cirurgia">✂️ Cirurgia</option>
+                </select>
+              </div>
+            )}
+
+            {activeTab === 'convenio' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Convênio
                 </label>
                 <select
@@ -452,6 +469,9 @@ export const RepasseComponent: React.FC = () => {
                 {activeTab === 'convenio' && (
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Convênio</th>
                 )}
+                {activeTab === 'convenio' && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo</th>
+                )}
                 {activeTab === 'particular' && (
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo</th>
                 )}
@@ -478,6 +498,27 @@ export const RepasseComponent: React.FC = () => {
                         </div>
                         <span className="text-gray-700">{repasse.convenio?.nome}</span>
                       </div>
+                    </td>
+                  )}
+                  {activeTab === 'convenio' && (
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                        repasse.tipo === 'cirurgia' 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {repasse.tipo === 'cirurgia' ? (
+                          <>
+                            <Scissors size={12} />
+                            Cirurgia
+                          </>
+                        ) : (
+                          <>
+                            <Stethoscope size={12} />
+                            Consulta
+                          </>
+                        )}
+                      </span>
                     </td>
                   )}
                   {activeTab === 'particular' && (

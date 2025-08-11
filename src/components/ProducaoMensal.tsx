@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, DollarSign, User, Building, TrendingUp, FileText, BarChart3 } from 'lucide-react';
+import { Calendar, Plus, DollarSign, User, Building, TrendingUp, FileText, BarChart3, Stethoscope, Scissors } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../types';
 import { ProducaoReport } from './Reports/ProducaoReport';
@@ -21,7 +21,8 @@ export const ProducaoMensalComponent: React.FC = () => {
     convenio_id: '',
     nome_paciente: '',
     data_consulta: '',
-    valor: ''
+    valor: '',
+    tipo: 'consulta' as 'consulta' | 'cirurgia'
   });
 
   useEffect(() => {
@@ -56,7 +57,8 @@ export const ProducaoMensalComponent: React.FC = () => {
         convenio_id: parseInt(formData.convenio_id),
         nome_paciente: formData.nome_paciente,
         data_consulta: formData.data_consulta,
-        valor: parseFloat(formData.valor)
+        valor: parseFloat(formData.valor),
+        tipo: formData.tipo
       });
 
       if (result.error) {
@@ -67,7 +69,8 @@ export const ProducaoMensalComponent: React.FC = () => {
           convenio_id: '',
           nome_paciente: '',
           data_consulta: '',
-          valor: ''
+          valor: '',
+          tipo: 'consulta'
         });
         setShowForm(false);
         loadData();
@@ -248,6 +251,21 @@ export const ProducaoMensalComponent: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Atendimento
+              </label>
+              <select
+                value={formData.tipo}
+                onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                required
+              >
+                <option value="consulta">🩺 Consulta</option>
+                <option value="cirurgia">✂️ Cirurgia</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Valor (R$)
               </label>
               <input
@@ -310,6 +328,7 @@ export const ProducaoMensalComponent: React.FC = () => {
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Médico</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Convênio</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Paciente</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Data</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Valor</th>
@@ -331,6 +350,25 @@ export const ProducaoMensalComponent: React.FC = () => {
                       </div>
                       <span className="text-gray-700">{producao.convenio?.nome}</span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                      producao.tipo === 'cirurgia' 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {producao.tipo === 'cirurgia' ? (
+                        <>
+                          <Scissors size={12} />
+                          Cirurgia
+                        </>
+                      ) : (
+                        <>
+                          <Stethoscope size={12} />
+                          Consulta
+                        </>
+                      )}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-gray-700">{producao.nome_paciente}</td>
                   <td className="px-6 py-4">
