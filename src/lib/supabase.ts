@@ -24,6 +24,23 @@ export const dbHelpers = {
     return { data, error };
   },
 
+  async updateMedico(id: number, medico: Omit<any, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('medicos')
+      .update(medico)
+      .eq('id', id)
+      .select();
+    return { data, error };
+  },
+
+  async deleteMedico(id: number) {
+    const { data, error } = await supabase
+      .from('medicos')
+      .delete()
+      .eq('id', id);
+    return { data, error };
+  },
+
   // Convenios
   async getConvenios() {
     const { data, error } = await supabase
@@ -38,6 +55,23 @@ export const dbHelpers = {
       .from('convenios')
       .insert([convenio])
       .select();
+    return { data, error };
+  },
+
+  async updateConvenio(id: number, convenio: Omit<any, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('convenios')
+      .update(convenio)
+      .eq('id', id)
+      .select();
+    return { data, error };
+  },
+
+  async deleteConvenio(id: number) {
+    const { data, error } = await supabase
+      .from('convenios')
+      .delete()
+      .eq('id', id);
     return { data, error };
   },
 

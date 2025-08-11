@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Database, AlertCircle, CheckCircle, Stethoscope } from 'lucide-react';
-import { dbHelpers } from '../lib/supabase';
+import { dbHelpers, supabase } from '../lib/supabase';
 
 export const DatabaseSetup: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -9,30 +9,6 @@ export const DatabaseSetup: React.FC = () => {
   const setupDatabase = async () => {
     setLoading(true);
     try {
-      // Create demo user if it doesn't exist
-      const { data: existingUser } = await supabase.auth.admin.getUserById('demo-user-id');
-      
-      if (!existingUser) {
-        // Try to create demo user via signup
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: 'rayannyrego@gmail.com',
-          password: 'Incom123',
-        });
-        
-        if (signUpError) {
-          console.log('Demo user may already exist or signup is disabled');
-        }
-      }
-      
-      // Create sample doctors
-      await dbHelpers.createMedico({ nome: 'Dr. João Silva', especialidade: 'Cardiologia' });
-      await dbHelpers.createMedico({ nome: 'Dra. Maria Santos', especialidade: 'Ortopedia' });
-      
-      // Create sample insurance plans
-      await dbHelpers.createConvenio({ nome: 'Unimed' });
-      await dbHelpers.createConvenio({ nome: 'Bradesco Saúde' });
-      await dbHelpers.createConvenio({ nome: 'Amil' });
-      
       // Create sample hospitals
       await dbHelpers.createHospital({ nome: 'Hospital São Lucas', cidade: 'São Paulo' });
       await dbHelpers.createHospital({ nome: 'Hospital Albert Einstein', cidade: 'São Paulo' });
@@ -73,7 +49,7 @@ export const DatabaseSetup: React.FC = () => {
         Configuração Inicial do Banco de Dados
       </h3>
       <p className="text-blue-700 mb-6 text-lg">
-        Clique no botão abaixo para criar dados de exemplo (médicos, convênios e hospitais).
+        Clique no botão abaixo para criar dados de exemplo (hospitais).
       </p>
       <button
         onClick={setupDatabase}
@@ -89,7 +65,7 @@ export const DatabaseSetup: React.FC = () => {
           <span className="text-sm font-medium">Importante:</span>
         </div>
         <p className="text-sm text-yellow-700 mt-1">
-          Certifique-se de ter conectado ao Supabase usando o botão "Connect to Supabase" no canto superior direito antes de prosseguir.
+          Certifique-se de ter conectado ao Supabase usando o botão "Connect to Supabase" no canto superior direito antes de prosseguir. Use as abas "Médicos" e "Convênios" para cadastrar os dados necessários.
         </p>
       </div>
     </div>

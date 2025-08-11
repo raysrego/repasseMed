@@ -1,7 +1,7 @@
 export interface Medico {
   id: number;
   nome: string;
-  especialidade?: string;
+  crm?: string;
   created_at?: string;
 }
 
