@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, FileText, Database, Stethoscope } from 'lucide-react';
+import { Activity, FileText, Database, Stethoscope, LogOut, User } from 'lucide-react';
 import { ProducaoMensalComponent } from './components/ProducaoMensal';
 import { RepasseComponent } from './components/Repasse';
 import { DatabaseSetup } from './components/DatabaseSetup';
+import { AuthProvider, useAuth } from './components/Auth/AuthContext';
+import { LoginForm } from './components/Auth/LoginForm';
 import { supabase } from './lib/supabase';
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<'producao' | 'repasse'>('producao');
   const [supabaseConnected, setSupabaseConnected] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     checkSupabaseConnection();
@@ -23,6 +26,14 @@ function App() {
     }
     setLoading(false);
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  if (!user) {
+    return <LoginForm />;
+  }
 
   if (loading) {
     return (
@@ -46,6 +57,19 @@ function App() {
                   <h1 className="text-xl font-bold text-gray-900">MedControl Pro</h1>
                   <p className="text-sm text-gray-600">Sistema de Controle de Repasse Médico</p>
                 </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <User size={16} />
+                  {user.email}
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <LogOut size={16} />
+                  Sair
+                </button>
               </div>
             </div>
           </div>
@@ -72,6 +96,19 @@ function App() {
                 <h1 className="text-xl font-bold text-gray-900">MedControl Pro</h1>
                 <p className="text-sm text-gray-600">Sistema de Controle de Repasse Médico</p>
               </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <User size={16} />
+                {user.email}
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                <LogOut size={16} />
+                Sair
+              </button>
             </div>
           </div>
         </div>
@@ -113,6 +150,14 @@ function App() {
         {activeTab === 'repasse' && <RepasseComponent />}
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

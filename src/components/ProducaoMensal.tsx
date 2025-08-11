@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, DollarSign, User, Building, TrendingUp, FileText } from 'lucide-react';
+import { Calendar, Plus, DollarSign, User, Building, TrendingUp, FileText, BarChart3 } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../types';
+import { ProducaoReport } from './Reports/ProducaoReport';
+import { EditProducaoModal } from './Modals/EditProducaoModal';
+import { ConfirmDeleteModal } from './Modals/ConfirmDeleteModal';
 
 export const ProducaoMensalComponent: React.FC = () => {
+  const [activeView, setActiveView] = useState<'form' | 'report'>('form');
   const [producoes, setProducoes] = useState<ProducaoMensal[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingProducao, setEditingProducao] = useState<ProducaoMensal | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     medico_id: '',
     convenio_id: '',
@@ -71,8 +78,74 @@ export const ProducaoMensalComponent: React.FC = () => {
     setLoading(false);
   };
 
+  const handleEdit = (producao: ProducaoMensal) => {
+    setEditingProducao(producao);
+  };
+
+  const handleDelete = async (id: number) => {
+    setDeletingId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
+    
+    setDeleteLoading(true);
+    try {
+      const result = await dbHelpers.deleteProducaoMensal(deletingId);
+      if (!result.error) {
+        loadData();
+        setDeletingId(null);
+      }
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+    }
+    setDeleteLoading(false);
+  };
+
+  const handleNew = () => {
+    setShowForm(true);
+    setActiveView('form');
+  };
+
   const totalPeriodo = producoes.reduce((sum, item) => sum + item.valor, 0);
 
+  if (activeView === 'report') {
+    return (
+      <div className="space-y-6">
+        {/* Navigation */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveView('form')}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            ← Voltar ao Formulário
+          </button>
+        </div>
+
+        <ProducaoReport
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onNew={handleNew}
+        />
+
+        <EditProducaoModal
+          producao={editingProducao}
+          isOpen={!!editingProducao}
+          onClose={() => setEditingProducao(null)}
+          onSave={loadData}
+        />
+
+        <ConfirmDeleteModal
+          isOpen={!!deletingId}
+          onClose={() => setDeletingId(null)}
+          onConfirm={confirmDelete}
+          title="Excluir Produção"
+          message="Tem certeza que deseja excluir este registro de produção? Esta ação não pode ser desfeita."
+          loading={deleteLoading}
+        />
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -88,13 +161,22 @@ export const ProducaoMensalComponent: React.FC = () => {
             </div>
           </div>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-        >
-          <Plus size={20} />
-          Nova Consulta
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setActiveView('report')}
+            className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            <BarChart3 size={20} />
+            Relatório
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            <Plus size={20} />
+            Nova Consulta
+          </button>
+        </div>
       </div>
 
       {showForm && (

@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, DollarSign, User, Building, Guitar as Hospital, CreditCard, UserCheck, Stethoscope, Scissors } from 'lucide-react';
+import { Calendar, Plus, DollarSign, User, Building, Guitar as Hospital, CreditCard, UserCheck, Stethoscope, Scissors, BarChart3 } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { Repasse, Medico, Convenio, Hospital as HospitalType } from '../types';
+import { RepasseReport } from './Reports/RepasseReport';
+import { EditRepasseModal } from './Modals/EditRepasseModal';
+import { ConfirmDeleteModal } from './Modals/ConfirmDeleteModal';
 
 export const RepasseComponent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'convenio' | 'particular'>('convenio');
+  const [activeView, setActiveView] = useState<'form' | 'report'>('form');
   const [repasses, setRepasses] = useState<Repasse[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [hospitais, setHospitais] = useState<HospitalType[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingRepasse, setEditingRepasse] = useState<Repasse | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     medico_id: '',
     convenio_id: '',
@@ -82,12 +89,107 @@ export const RepasseComponent: React.FC = () => {
     setLoading(false);
   };
 
+  const handleEdit = (repasse: Repasse) => {
+    setEditingRepasse(repasse);
+  };
+
+  const handleDelete = async (id: number) => {
+    setDeletingId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
+    
+    setDeleteLoading(true);
+    try {
+      const result = await dbHelpers.deleteRepasse(deletingId);
+      if (!result.error) {
+        loadData();
+        setDeletingId(null);
+      }
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+    }
+    setDeleteLoading(false);
+  };
+
+  const handleNew = () => {
+    setShowForm(true);
+    setActiveView('form');
+  };
+
   const filteredRepasses = repasses.filter(repasse => 
     activeTab === 'convenio' ? !repasse.is_particular : repasse.is_particular
   );
 
   const totalPeriodo = filteredRepasses.reduce((sum, item) => sum + item.valor, 0);
 
+  if (activeView === 'report') {
+    return (
+      <div className="space-y-6">
+        {/* Navigation */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveView('form')}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          >
+            ← Voltar ao Formulário
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('convenio')}
+              className={`py-3 px-6 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
+                activeTab === 'convenio'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Building size={16} />
+              Repasse por Convênio
+            </button>
+            <button
+              onClick={() => setActiveTab('particular')}
+              className={`py-3 px-6 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
+                activeTab === 'particular'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <UserCheck size={16} />
+              Repasse Particular
+            </button>
+          </nav>
+        </div>
+
+        <RepasseReport
+          activeTab={activeTab}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onNew={handleNew}
+        />
+
+        <EditRepasseModal
+          repasse={editingRepasse}
+          isOpen={!!editingRepasse}
+          onClose={() => setEditingRepasse(null)}
+          onSave={loadData}
+        />
+
+        <ConfirmDeleteModal
+          isOpen={!!deletingId}
+          onClose={() => setDeletingId(null)}
+          onConfirm={confirmDelete}
+          title="Excluir Repasse"
+          message="Tem certeza que deseja excluir este registro de repasse? Esta ação não pode ser desfeita."
+          loading={deleteLoading}
+        />
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -103,13 +205,22 @@ export const RepasseComponent: React.FC = () => {
             </div>
           </div>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-        >
-          <Plus size={20} />
-          Novo Repasse
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setActiveView('report')}
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            <BarChart3 size={20} />
+            Relatório
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            <Plus size={20} />
+            Novo Repasse
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}

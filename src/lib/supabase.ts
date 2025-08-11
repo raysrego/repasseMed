@@ -71,6 +71,18 @@ export const dbHelpers = {
     return { data, error };
   },
 
+  async getProducaoMensalByMedico(medicoId: number) {
+    const { data, error } = await supabase
+      .from('producao_mensal')
+      .select(`
+        *,
+        medico:medicos(*),
+        convenio:convenios(*)
+      `)
+      .eq('medico_id', medicoId)
+      .order('data_consulta', { ascending: false });
+    return { data, error };
+  },
   async createProducaoMensal(producao: Omit<any, 'id' | 'created_at'>) {
     const { data, error } = await supabase
       .from('producao_mensal')
@@ -79,6 +91,22 @@ export const dbHelpers = {
     return { data, error };
   },
 
+  async updateProducaoMensal(id: number, producao: Omit<any, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('producao_mensal')
+      .update(producao)
+      .eq('id', id)
+      .select();
+    return { data, error };
+  },
+
+  async deleteProducaoMensal(id: number) {
+    const { data, error } = await supabase
+      .from('producao_mensal')
+      .delete()
+      .eq('id', id);
+    return { data, error };
+  },
   // Repasses
   async getRepasses() {
     const { data, error } = await supabase
@@ -93,11 +121,41 @@ export const dbHelpers = {
     return { data, error };
   },
 
+  async getRepassesByMedico(medicoId: number) {
+    const { data, error } = await supabase
+      .from('repasses')
+      .select(`
+        *,
+        medico:medicos(*),
+        convenio:convenios(*),
+        hospital:hospitais(*)
+      `)
+      .eq('medico_id', medicoId)
+      .order('data_cirurgia', { ascending: false });
+    return { data, error };
+  },
   async createRepasse(repasse: Omit<any, 'id' | 'created_at'>) {
     const { data, error } = await supabase
       .from('repasses')
       .insert([repasse])
       .select();
+    return { data, error };
+  },
+
+  async updateRepasse(id: number, repasse: Omit<any, 'id' | 'created_at'>) {
+    const { data, error } = await supabase
+      .from('repasses')
+      .update(repasse)
+      .eq('id', id)
+      .select();
+    return { data, error };
+  },
+
+  async deleteRepasse(id: number) {
+    const { data, error } = await supabase
+      .from('repasses')
+      .delete()
+      .eq('id', id);
     return { data, error };
   }
 };
