@@ -80,6 +80,10 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
     setLoading(false);
   };
 
+  const filteredProducoes = producoes;
+
+  const totalGeral = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
+
   const handlePrint = () => {
     const printContent = document.getElementById('relatorio-producao');
     if (printContent) {
@@ -115,10 +119,6 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
       }
     }
   };
-
-  const filteredProducoes = producoes;
-
-  const totalGeral = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
 
   return (
     <div className="space-y-6">
@@ -270,129 +270,6 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                       <span className="font-bold text-green-600 text-lg">R$ {producao.valor.toFixed(2)}</span>
                     </td>
                     <td className="px-6 py-4 print:hidden">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => onEdit(producao)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(producao.id)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
-                          title="Excluir"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-            <select
-              value={selectedMedico}
-              onChange={(e) => setSelectedMedico(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Todos os médicos</option>
-              {medicos.map(medico => (
-                <option key={medico.id} value={medico.id}>{medico.nome}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary */}
-      <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-500 p-2 rounded-lg">
-              <DollarSign className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold text-green-800">
-                {selectedMedico ? `Total - ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}` : 'Total Geral'}
-              </h4>
-              <p className="text-sm text-green-600">{filteredProducoes.length} consultas</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-green-700">R$ {totalGeral.toFixed(2)}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-        <div className="p-6 border-b border-gray-200">
-          <h4 className="text-lg font-semibold text-gray-900">Registros de Produção</h4>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Médico</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Convênio</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Paciente</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Data Atendimento</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Valor</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  </td>
-                </tr>
-              ) : filteredProducoes.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    Nenhum registro encontrado
-                  </td>
-                </tr>
-              ) : (
-                filteredProducoes.map((producao, index) => (
-                  <tr key={producao.id} className={`transition-colors duration-150 hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-1.5 rounded-full">
-                          <User size={14} className="text-blue-600" />
-                        </div>
-                        <span className="font-medium text-gray-900">{producao.medico?.nome}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-green-100 p-1.5 rounded-full">
-                          <Building size={14} className="text-green-600" />
-                        </div>
-                        <span className="text-gray-700">{producao.convenio?.nome}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700">{producao.nome_paciente}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-gray-400" />
-                        <span className="text-gray-700">{new Date(producao.data_consulta).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-green-600 text-lg">R$ {producao.valor.toFixed(2)}</span>
-                    </td>
-                    <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => onEdit(producao)}
