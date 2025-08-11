@@ -9,6 +9,21 @@ export const DatabaseSetup: React.FC = () => {
   const setupDatabase = async () => {
     setLoading(true);
     try {
+      // Create demo user if it doesn't exist
+      const { data: existingUser } = await supabase.auth.admin.getUserById('demo-user-id');
+      
+      if (!existingUser) {
+        // Try to create demo user via signup
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: 'rayannyrego@gmail.com',
+          password: 'Incom123',
+        });
+        
+        if (signUpError) {
+          console.log('Demo user may already exist or signup is disabled');
+        }
+      }
+      
       // Create sample doctors
       await dbHelpers.createMedico({ nome: 'Dr. João Silva', especialidade: 'Cardiologia' });
       await dbHelpers.createMedico({ nome: 'Dra. Maria Santos', especialidade: 'Ortopedia' });

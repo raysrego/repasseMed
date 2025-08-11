@@ -202,6 +202,9 @@ export const LoginForm: React.FC = () => {
             <strong>Email:</strong> rayannyrego@gmail.com<br />
             <strong>Senha:</strong> Incom123
           </p>
+          <p className="text-xs text-yellow-600 mt-2">
+            Se o usuário não existir, use a opção "Criar conta" acima para cadastrar-se.
+          </p>
         </div>
       </div>
     </div>
