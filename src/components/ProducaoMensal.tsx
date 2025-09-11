@@ -27,7 +27,7 @@ export const ProducaoMensalComponent: React.FC = () => {
   const [editingProducao, setEditingProducao] = useState<ProducaoMensal | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [filtroMedicoId, setFiltroMedicoId] = useState<string>('');
+  const [selectedMedico, setSelectedMedico] = useState<string>('');
   const [formData, setFormData] = useState({
     medico_id: '',
     convenio_id: '',
@@ -94,16 +94,6 @@ export const ProducaoMensalComponent: React.FC = () => {
     setLoading(false);
   };
 
-  // --- Cálculos do filtro ---
-  const producoesMedico = producoes.filter(
-    (p) => p.medico_id === Number(filtroMedicoId)
-  );
-  const totalMedico = producoesMedico.reduce(
-    (soma, p) => soma + Number(p.valor),
-    0
-  );
-  const cincoPorCento = totalMedico * 0.05;
-
   const handleEdit = (producao: ProducaoMensal) => {
     setEditingProducao(producao);
   };
@@ -133,7 +123,15 @@ export const ProducaoMensalComponent: React.FC = () => {
     setActiveView('form');
   };
 
+  // Filtrar produções por médico selecionado
+  const filteredProducoes = selectedMedico 
+    ? producoes.filter(p => p.medico_id === parseInt(selectedMedico))
+    : producoes;
+
+  // Calcular totais
   const totalPeriodo = producoes.reduce((sum, item) => sum + item.valor, 0);
+  const totalMedicoSelecionado = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
+  const cincoPorCentoMedico = totalMedicoSelecionado * 0.05;
 
   if (activeView === 'report') {
     return (
@@ -174,35 +172,6 @@ export const ProducaoMensalComponent: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Filtro por médico */}
-      <div style={{ marginBottom: '1rem' }}>
-        <label>Médico: </label>
-        <select
-          value={filtroMedicoId}
-          onChange={(e) => setFiltroMedicoId(e.target.value)}
-        >
-          <option value="">Selecione um médico</option>
-          {medicos.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.nome}
-            </option>
-          ))}
-        </select>
-
-        {filtroMedicoId && (
-          <div style={{ marginTop: '1rem' }}>
-            <p>
-              Total do médico:{' '}
-              <strong>R$ {totalMedico.toFixed(2)}</strong>
-            </p>
-            <p>
-              5% do total:{' '}
-              <strong>R$ {cincoPorCento.toFixed(2)}</strong>
-            </p>
-          </div>
-        )}
-      </div>
-
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
@@ -235,6 +204,96 @@ export const ProducaoMensalComponent: React.FC = () => {
         </div>
       </div>
 
+      {/* Filtro por médico */}
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="bg-blue-100 p-2 rounded-lg">
+              <User className="h-5 w-5 text-blue-600" />
+            </div>
+            <span className="font-semibold text-gray-800">Filtrar por Médico:</span>
+          </div>
+          <div className="max-w-xs">
+            <select
+              value={selectedMedico}
+              onChange={(e) => setSelectedMedico(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Todos os médicos</option>
+              {medicos.map(medico => (
+                <option key={medico.id} value={medico.id}>{medico.nome}</option>
+              ))}
+            </select>
+          </div>
+          {selectedMedico && (
+            <button
+              onClick={() => setSelectedMedico('')}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+            >
+              Limpar Filtro
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-100 text-sm font-medium">
+                {selectedMedico ? 'Total do Médico' : 'Total Geral'}
+              </p>
+              <p className="text-2xl font-bold">
+                R$ {selectedMedico ? totalMedicoSelecionado.toFixed(2) : totalPeriodo.toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-white/20 p-3 rounded-lg">
+              <DollarSign className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 text-sm font-medium">Total de Consultas</p>
+              <p className="text-2xl font-bold">{filteredProducoes.length}</p>
+            </div>
+            <div className="bg-white/20 p-3 rounded-lg">
+              <FileText className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+        
+        {selectedMedico && (
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">5% do Total</p>
+                <p className="text-2xl font-bold">R$ {cincoPorCentoMedico.toFixed(2)}</p>
+              </div>
+              <div className="bg-white/20 p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {!selectedMedico && (
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Média por Consulta</p>
+                <p className="text-2xl font-bold">R$ {producoes.length > 0 ? (totalPeriodo / producoes.length).toFixed(2) : '0.00'}</p>
+              </div>
+              <div className="bg-white/20 p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
       {showForm && (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
           <div className="flex items-center gap-2 mb-6">
@@ -366,9 +425,14 @@ export const ProducaoMensalComponent: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h4 className="text-lg font-semibold text-gray-900">Produções Recentes</h4>
+              <h4 className="text-lg font-semibold text-gray-900">
+                {selectedMedico 
+                  ? `Produções de ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}` 
+                  : 'Produções Recentes'
+                }
+              </h4>
               <div className="text-sm text-gray-500">
-                {producoes.length} registro{producoes.length !== 1 ? 's' : ''} encontrado{producoes.length !== 1 ? 's' : ''}
+                {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''} encontrado{filteredProducoes.length !== 1 ? 's' : ''}
               </div>
             </div>
           </div>
@@ -406,7 +470,7 @@ export const ProducaoMensalComponent: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  producoes.slice(0, 10).map((producao, index) => (
+                  filteredProducoes.slice(0, 10).map((producao, index) => (
                     <tr key={producao.id} className={`transition-colors duration-150 hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -460,13 +524,13 @@ export const ProducaoMensalComponent: React.FC = () => {
             </table>
           </div>
           
-          {producoes.length > 10 && (
+          {filteredProducoes.length > 10 && (
             <div className="p-4 text-center border-t border-gray-200">
               <button
                 onClick={() => setActiveView('report')}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                Ver todos os {producoes.length} registros no relatório →
+                Ver todos os {filteredProducoes.length} registros no relatório →
               </button>
             </div>
           )}
