@@ -9,9 +9,10 @@ interface RepasseReportProps {
   onEdit: (repasse: Repasse) => void;
   onDelete: (id: number) => void;
   onNew: () => void;
+  hasParticularAccess: boolean;
 }
 
-export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit, onDelete, onNew }) => {
+export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit, onDelete, onNew, hasParticularAccess }) => {
   const [repasses, setRepasses] = useState<Repasse[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
@@ -456,3 +457,33 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit,
                           <Trash2 size={16} />
                         </button>
                       </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Footer Summary */}
+        {filteredRepasses.length > 0 && (
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-t border-gray-200">
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                Exibindo {filteredRepasses.length} registro{filteredRepasses.length !== 1 ? 's' : ''}
+                {selectedMedico && ` para ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
+              </div>
+              <div className="flex gap-6 items-center">
+                <div className="text-right">
+                  <div className="text-lg font-bold text-gray-900">
+                    Total: R$ {totalGeral.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
