@@ -89,20 +89,20 @@ export const RepasseComponent: React.FC = () => {
         const categoria = activeParticularForm === 'consulta_onda' ? 'consulta_onda' : 'infiltracao_cirurgia';
         const tipo = ['consulta', 'onda_choque'].includes(formData.tipo_procedimento) ? 'consulta' : 'cirurgia';
         
+        // Garantir que temos um hospital válido
+        let hospitalId = 1; // ID padrão para particulares
+        if (hospitais.length > 0) {
+          hospitalId = hospitais[0].id;
+        }
+        
         result = await dbHelpers.createRepasse({
           medico_id: parseInt(formData.medico_id),
-          convenio_id: null,
           nome_paciente: formData.nome_paciente,
-          hospital_id: 1, // Valor padrão para particulares
+          hospital_id: hospitalId,
           data_cirurgia: formData.data_cirurgia,
           valor: valorTotal,
           tipo: tipo,
-          is_particular: true,
-          categoria_particular: categoria,
-          tipo_procedimento: formData.tipo_procedimento,
-          quantidade: parseInt(formData.quantidade),
-          forma_pagamento: formData.forma_pagamento,
-          valor_unitario: parseFloat(formData.valor_unitario)
+          is_particular: true
         });
       }
 

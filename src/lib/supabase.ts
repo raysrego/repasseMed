@@ -186,9 +186,14 @@ export const dbHelpers = {
     return { data, error };
   },
   async createRepasse(repasse: Omit<any, 'id' | 'created_at'>) {
+    // Limpar campos undefined ou null para evitar erro 400
+    const cleanRepasse = Object.fromEntries(
+      Object.entries(repasse).filter(([_, value]) => value !== undefined && value !== null)
+    );
+    
     const { data, error } = await supabase
       .from('repasses')
-      .insert([repasse])
+      .insert([cleanRepasse])
       .select();
     return { data, error };
   },
