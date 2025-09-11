@@ -9,10 +9,9 @@ interface RepasseReportProps {
   onEdit: (repasse: Repasse) => void;
   onDelete: (id: number) => void;
   onNew: () => void;
-  hasParticularAccess: boolean;
 }
 
-export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit, onDelete, onNew, hasParticularAccess }) => {
+export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit, onDelete, onNew }) => {
   const [repasses, setRepasses] = useState<Repasse[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
@@ -361,131 +360,4 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit,
                           <User size={14} className="text-blue-600" />
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">{repasse.medico?.nome}</div>
-                          {repasse.medico?.crm && (
-                            <div className="text-xs text-gray-500">CRM: {repasse.medico.crm}</div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    {activeTab === 'convenio' && (
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-green-100 p-1.5 rounded-full print:hidden">
-                            <Building size={14} className="text-green-600" />
-                          </div>
-                          <span className="font-medium text-gray-700">{repasse.convenio?.nome}</span>
-                        </div>
-                      </td>
-                    )}
-                    {activeTab === 'convenio' && (
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                          repasse.tipo === 'cirurgia' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {repasse.tipo === 'cirurgia' ? (
-                            <>
-                              <Scissors size={12} className="print:hidden" />
-                              Cirurgia
-                            </>
-                          ) : (
-                            <>
-                              <Stethoscope size={12} className="print:hidden" />
-                              Consulta
-                            </>
-                          )}
-                        </span>
-                      </td>
-                    )}
-                    {activeTab === 'particular' && (
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                          repasse.tipo === 'cirurgia' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {repasse.tipo === 'cirurgia' ? (
-                            <>
-                              <Scissors size={12} className="print:hidden" />
-                              Cirurgia
-                            </>
-                          ) : (
-                            <>
-                              <Stethoscope size={12} className="print:hidden" />
-                              Consulta
-                            </>
-                          )}
-                        </span>
-                      </td>
-                    )}
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-gray-900">{repasse.nome_paciente}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-purple-100 p-1.5 rounded-full print:hidden">
-                          <Building size={14} className="text-purple-600" />
-                        </div>
-                        <span className="font-medium text-gray-700">{repasse.hospital?.nome}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-gray-400 print:hidden" />
-                        <span className="font-medium text-gray-700">{new Date(repasse.data_cirurgia).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="bg-green-100 px-3 py-1 rounded-full w-fit">
-                        <span className="font-bold text-green-700 text-sm">R$ {repasse.valor.toFixed(2)}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 print:hidden">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => onEdit(repasse)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200 hover:scale-110"
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(repasse.id)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 hover:scale-110"
-                          title="Excluir"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Footer Summary */}
-        {filteredRepasses.length > 0 && (
-          <div className={`px-6 py-4 border-t border-gray-200 ${
-            activeTab === 'convenio' 
-              ? 'bg-gradient-to-r from-blue-50 to-blue-100' 
-              : 'bg-gradient-to-r from-purple-50 to-purple-100'
-          }`}>
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-600">
-                Exibindo {filteredRepasses.length} registro{filteredRepasses.length !== 1 ? 's' : ''}
-                {selectedMedico && ` para ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
-              </div>
-              <div className="text-lg font-bold text-gray-900">
-                Total: R$ {totalGeral.toFixed(2)}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+                          <div className="font-semibold text-gray-900">{repasse.medico?.
