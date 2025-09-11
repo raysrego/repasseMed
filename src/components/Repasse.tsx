@@ -11,6 +11,7 @@ export const RepasseComponent: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'convenio' | 'particular'>('convenio');
   const [activeView, setActiveView] = useState<'form' | 'report'>('form');
+  const [activeParticularForm, setActiveParticularForm] = useState<'consulta_onda' | 'infiltracao_cirurgia'>('consulta_onda');
   const [repasses, setRepasses] = useState<Repasse[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
@@ -22,18 +23,23 @@ export const RepasseComponent: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     medico_id: '',
+    nome_paciente: '',
+    data_cirurgia: '',
+    tipo_procedimento: 'consulta' as 'consulta' | 'onda_choque' | 'infiltracao' | 'cirurgia',
+    quantidade: '1',
+    forma_pagamento: 'pix' as 'credito' | 'pix' | 'debito' | 'especie',
+    valor_unitario: ''
+  });
+
+  const [formDataConvenio, setFormDataConvenio] = useState({
+    medico_id: '',
     convenio_id: '',
     nome_paciente: '',
     hospital_id: '',
     data_cirurgia: '',
     valor: '',
-    tipo: 'consulta' as 'consulta' | 'cirurgia',
-    categoria_particular: 'consulta_onda' as 'consulta_onda' | 'infiltracao_cirurgia',
-    tipo_procedimento: 'consulta',
-    quantidade: '1',
-    forma_pagamento: 'pix' as 'credito' | 'pix' | 'debito' | 'especie',
-    valor_unitario: ''
-  });
+    tipo: 'consulta' as 'consulta' | 'cirurgia'
+  });</parameter>
 
   useEffect(() => {
     loadData();
@@ -62,46 +68,68 @@ export const RepasseComponent: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Calcular valor total para particulares
-    const valorFinal = activeTab === 'particular' 
-      ? parseFloat(formData.valor_unitario) * parseInt(formData.quantidade)
-      : parseFloat(formData.valor);
-    
+
     try {
-      const result = await dbHelpers.createRepasse({
-        medico_id: parseInt(formData.medico_id),
-        convenio_id: activeTab === 'convenio' ? parseInt(formData.convenio_id) : null,
-        nome_paciente: formData.nome_paciente,
-        hospital_id: parseInt(formData.hospital_id),
-        data_cirurgia: formData.data_cirurgia,
-        valor: valorFinal,
-        tipo: formData.tipo,
-        is_particular: activeTab === 'particular',
-        categoria_particular: activeTab === 'particular' ? formData.categoria_particular : undefined,
-        tipo_procedimento: activeTab === 'particular' ? formData.tipo_procedimento : undefined,
-        quantidade: activeTab === 'particular' ? parseInt(formData.quantidade) : undefined,
-        forma_pagamento: activeTab === 'particular' ? formData.forma_pagamento : undefined,
-        valor_unitario: activeTab === 'particular' ? parseFloat(formData.valor_unitario) : undefined
-      });
+      let result;
+      
+      if (activeTab === 'convenio') {
+        result = await dbHelpers.createRepasse({
+          medico_id: parseInt(formDataConvenio.medico_id),
+          convenio_id: parseInt(formDataConvenio.convenio_id),
+          nome_paciente: formDataConvenio.nome_paciente,
+          hospital_id: parseInt(formDataConvenio.hospital_id),
+          data_cirurgia: formDataConvenio.data_cirurgia,
+          valor: parseFloat(formDataConvenio.valor),
+          tipo: formDataConvenio.tipo,
+          is_particular: false
+        });
+      } else {
+        // Para particulares, calcular valor total
+        const valorTotal = parseFloat(formData.valor_unitario) * parseInt(formData.quantidade);
+        const categoria = activeParticularForm === 'consulta_onda' ? 'consulta_onda' : 'infiltracao_cirurgia';
+        const tipo = ['consulta', 'onda_choque'].includes(formData.tipo_procedimento) ? 'consulta' : 'cirurgia';
+        
+        result = await dbHelpers.createRepasse({
+          medico_id: parseInt(formData.medico_id),
+          convenio_id: null,
+          nome_paciente: formData.nome_paciente,
+          hospital_id: 1, // Valor padrão para particulares
+          data_cirurgia: formData.data_cirurgia,
+          valor: valorTotal,
+          tipo: tipo,
+          is_particular: true,
+          categoria_particular: categoria,
+          tipo_procedimento: formData.tipo_procedimento,
+          quantidade: parseInt(formData.quantidade),
+          forma_pagamento: formData.forma_pagamento,
+          valor_unitario: parseFloat(formData.valor_unitario)
+        });
+      }
 
       if (result.error) {
         console.error('Erro:', result.error);
       } else {
-        setFormData({
+        // Reset form data
+        setFormDataConvenio({
           medico_id: '',
           convenio_id: '',
           nome_paciente: '',
           hospital_id: '',
           data_cirurgia: '',
           valor: '',
-          tipo: 'consulta',
-          categoria_particular: 'consulta_onda',
+          tipo: 'consulta'
+        });
+        
+        setFormData({
+          medico_id: '',
+          nome_paciente: '',
+          data_cirurgia: '',
           tipo_procedimento: 'consulta',
           quantidade: '1',
           forma_pagamento: 'pix',
           valor_unitario: ''
         });
+        
         setShowForm(false);
         loadData();
       }
