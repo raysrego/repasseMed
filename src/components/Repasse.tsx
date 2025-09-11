@@ -361,23 +361,6 @@ export const RepasseComponent: React.FC = () => {
             {activeTab === 'convenio' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de Atendimento
-                </label>
-                <select
-                  value={formData.tipo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  required
-                >
-                  <option value="consulta">🩺 Consulta</option>
-                  <option value="cirurgia">✂️ Cirurgia</option>
-                </select>
-              </div>
-            )}
-
-            {activeTab === 'convenio' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Convênio
                 </label>
                 <select
@@ -397,25 +380,19 @@ export const RepasseComponent: React.FC = () => {
             {activeTab === 'particular' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de Procedimento
+                  <div className="flex items-center gap-2">
+                    <Stethoscope size={16} />
+                    Tipo de Atendimento
+                  </div>
                 </label>
                 <select
-                  value={formData.tipo_procedimento}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tipo_procedimento: e.target.value }))}
+                  value={formData.tipo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   required
                 >
-                  {formData.categoria_particular === 'consulta_onda' ? (
-                    <>
-                      <option value="consulta">🩺 Consulta</option>
-                      <option value="onda_choque">🌊 Onda de Choque</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="infiltracao">💉 Infiltração</option>
-                      <option value="cirurgia">✂️ Cirurgia</option>
-                    </>
-                  )}
+                  <option value="consulta">🩺 Consulta</option>
+                  <option value="cirurgia">✂️ Cirurgia</option>
                 </select>
               </div>
             )}
@@ -452,7 +429,7 @@ export const RepasseComponent: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Data da {activeTab === 'particular' && formData.tipo === 'cirurgia' ? 'Cirurgia' : 'Consulta'}
+                Data do Atendimento
               </label>
               <input
                 type="date"
@@ -463,18 +440,123 @@ export const RepasseComponent: React.FC = () => {
               />
             </div>
 
-            <div>
+            {activeTab === 'particular' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantidade
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.quantidade}
+                    onChange={(e) => setFormData(prev => ({ ...prev, quantidade: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Forma de Pagamento
+                  </label>
+                  <select
+                    value={formData.forma_pagamento}
+                    onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value as 'credito' | 'pix' | 'debito' | 'especie' }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  >
+                    <option value="pix">💳 PIX</option>
+                    <option value="credito">💳 Cartão de Crédito</option>
+                    <option value="debito">💳 Cartão de Débito</option>
+                    <option value="especie">💰 Dinheiro</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Valor Unitário (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.valor_unitario}
+                    onChange={(e) => setFormData(prev => ({ ...prev, valor_unitario: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Valor Total (R$)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.valor_unitario && formData.quantidade 
+                      ? (parseFloat(formData.valor_unitario) * parseInt(formData.quantidade)).toFixed(2)
+                      : '0.00'
+                    }
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+                    disabled
+                  />
+                </div>
+              </>
+            )}
+
+            {activeTab === 'convenio' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Valor (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  required
+                />
+              </div>
+            )}
+
+            {activeTab === 'convenio' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de Atendimento
+                </label>
+                <select
+                  value={formData.tipo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  required
+                >
+                  <option value="consulta">🩺 Consulta</option>
+                  <option value="cirurgia">✂️ Cirurgia</option>
+                </select>
+              </div>
+            )}
+
+            <div className={activeTab === 'particular' ? 'md:col-span-2' : ''}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Valor (R$)
+                {activeTab === 'particular' ? 'Observações (opcional)' : 'Valor (R$)'}
               </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.valor}
-                onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                required
-              />
+              {activeTab === 'particular' ? (
+                <textarea
+                  rows={3}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  placeholder="Observações adicionais sobre o atendimento..."
+                />
+              ) : (
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  required
+                />
+              )}
             </div>
 
             <div className="md:col-span-2 flex gap-2">
