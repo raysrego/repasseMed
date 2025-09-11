@@ -411,9 +411,3 @@ export const ProducaoMensalComponent: React.FC = () => {
     </div>
   );
 };
-
-        </div>
-      )}
-    </div>
-  );
-};
