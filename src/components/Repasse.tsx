@@ -397,19 +397,25 @@ export const RepasseComponent: React.FC = () => {
             {activeTab === 'particular' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <div className="flex items-center gap-2">
-                    <Stethoscope size={16} />
-                    Tipo de Atendimento
-                  </div>
+                  Tipo de Procedimento
                 </label>
                 <select
-                  value={formData.tipo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
+                  value={formData.tipo_procedimento}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tipo_procedimento: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   required
                 >
-                  <option value="consulta">🩺 Consulta</option>
-                  <option value="cirurgia">✂️ Cirurgia</option>
+                  {formData.categoria_particular === 'consulta_onda' ? (
+                    <>
+                      <option value="consulta">🩺 Consulta</option>
+                      <option value="onda_choque">🌊 Onda de Choque</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="infiltracao">💉 Infiltração</option>
+                      <option value="cirurgia">✂️ Cirurgia</option>
+                    </>
+                  )}
                 </select>
               </div>
             )}
