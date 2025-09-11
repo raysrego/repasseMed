@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, DollarSign, User, Building, TrendingUp, FileText, BarChart3, Stethoscope, Scissors } from 'lucide-react';
+import {
+  Calendar,
+  Plus,
+  DollarSign,
+  User,
+  Building,
+  TrendingUp,
+  FileText,
+  BarChart3,
+  Stethoscope,
+  Scissors
+} from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../types';
 import { ProducaoReport } from './Reports/ProducaoReport';
@@ -48,71 +59,51 @@ export const ProducaoMensalComponent: React.FC = () => {
     setLoading(false);
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-  await dbHelpers.createProducaoMensal({
-  medico_id: parseInt(formData.medico_id),
-  convenio_id: parseInt(formData.convenio_id),
-  nome_paciente: formData.nome_paciente,
-  data_consulta: formData.data_consulta, // ← string pura (YYYY-MM-DD)
-  valor: parseFloat(formData.valor),
-  tipo: formData.tipo
-});
-
+    try {
+      const result = await dbHelpers.createProducaoMensal({
+        medico_id: parseInt(formData.medico_id),
+        convenio_id: parseInt(formData.convenio_id),
+        nome_paciente: formData.nome_paciente,
+        data_consulta: formData.data_consulta,
+        valor: parseFloat(formData.valor),
+        tipo: formData.tipo
+      });
 
       if (result.error) {
         console.error('Erro:', result.error);
       } else {
-       setFormData({
-      medico_id: '',
-      convenio_id: '',
-      nome_paciente: '',
-      data_consulta: '',
-      valor: '',
-      tipo: 'consulta'
-    });
+        setFormData({
+          medico_id: '',
+          convenio_id: '',
+          nome_paciente: '',
+          data_consulta: '',
+          valor: '',
+          tipo: 'consulta'
+        });
         setShowForm(false);
-          loadData();
-  } catch (error) {
-    console.error('Erro ao salvar produção:', error);
-  }
+        loadData();
+      }
+    } catch (error) {
+      console.error('Erro ao salvar produção:', error);
+    }
 
-   
-  setLoading(false);
-};
+    setLoading(false);
+  };
 
- // --- Cálculos do filtro ---
+  // --- Cálculos do filtro ---
   const producoesMedico = producoes.filter(
-    p => p.medico_id === Number(filtroMedicoId)
+    (p) => p.medico_id === Number(filtroMedicoId)
   );
-  const totalMedico = producoesMedico.reduce((soma, p) => soma + Number(p.valor), 0);
+  const totalMedico = producoesMedico.reduce(
+    (soma, p) => soma + Number(p.valor),
+    0
+  );
   const cincoPorCento = totalMedico * 0.05;
-return (
-    <div>
-      {/* Filtro por médico */}
-      <div style={{ marginBottom: '1rem' }}>
-        <label>Médico: </label>
-        <select
-          value={filtroMedicoId}
-          onChange={e => setFiltroMedicoId(e.target.value)}
-        >
-          <option value="">Selecione um médico</option>
-          {medicos.map(m => (
-            <option key={m.id} value={m.id}>{m.nome}</option>
-          ))}
-        </select>
 
-        {filtroMedicoId && (
-          <div style={{ marginTop: '1rem' }}>
-            <p>Total do médico: <strong>R$ {totalMedico.toFixed(2)}</strong></p>
-            <p>5% do total: <strong>R$ {cincoPorCento.toFixed(2)}</strong></p>
-          </div>
-        )}
-      </div>
-  
   const handleEdit = (producao: ProducaoMensal) => {
     setEditingProducao(producao);
   };
@@ -123,7 +114,7 @@ return (
 
   const confirmDelete = async () => {
     if (!deletingId) return;
-    
+
     setDeleteLoading(true);
     try {
       const result = await dbHelpers.deleteProducaoMensal(deletingId);
@@ -147,7 +138,6 @@ return (
   if (activeView === 'report') {
     return (
       <div className="space-y-6">
-        {/* Navigation */}
         <div className="flex gap-2">
           <button
             onClick={() => setActiveView('form')}
@@ -181,21 +171,52 @@ return (
       </div>
     );
   }
+
   return (
     <div className="space-y-6">
+      {/* Filtro por médico */}
+      <div style={{ marginBottom: '1rem' }}>
+        <label>Médico: </label>
+        <select
+          value={filtroMedicoId}
+          onChange={(e) => setFiltroMedicoId(e.target.value)}
+        >
+          <option value="">Selecione um médico</option>
+          {medicos.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.nome}
+            </option>
+          ))}
+        </select>
+
+        {filtroMedicoId && (
+          <div style={{ marginTop: '1rem' }}>
+            <p>
+              Total do médico:{' '}
+              <strong>R$ {totalMedico.toFixed(2)}</strong>
+            </p>
+            <p>
+              5% do total:{' '}
+              <strong>R$ {cincoPorCento.toFixed(2)}</strong>
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Header Section */}
       <div className="flex justify-between items-center">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-r from-green-500 to-green-600 p-2 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Produção Mensal</h2>
-              <p className="text-gray-600">Controle de consultas e produção médica</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 p-2 rounded-lg">
+            <TrendingUp className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Produção Mensal</h2>
+            <p className="text-gray-600">
+              Controle de consultas e produção médica
+            </p>
           </div>
         </div>
+
         <div className="flex gap-3">
           <button
             onClick={() => setActiveView('report')}
@@ -220,204 +241,180 @@ return (
             <FileText className="h-5 w-5 text-blue-600" />
             <h3 className="text-lg font-semibold text-gray-900">Nova Consulta</h3>
           </div>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Médico
               </label>
               <select
                 value={formData.medico_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, medico_id: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, medico_id: e.target.value }))
+                }
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
               >
                 <option value="">Selecione o médico</option>
-                {medicos.map(medico => (
-                  <option key={medico.id} value={medico.id}>{medico.nome}</option>
+                {medicos.map((medico) => (
+                  <option key={medico.id} value={medico.id}>
+                    {medico.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Médico
+              </label>
+              <select
+                value={formData.medico_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, medico_id: e.target.value })
+                }
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              >
+                <option value="">Selecione</option>
+                {medicos.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nome}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700">
                 Convênio
               </label>
               <select
                 value={formData.convenio_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, convenio_id: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                onChange={(e) =>
+                  setFormData({ ...formData, convenio_id: e.target.value })
+                }
                 required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               >
-                <option value="">Selecione o convênio</option>
-                {convenios.map(convenio => (
-                  <option key={convenio.id} value={convenio.id}>{convenio.nome}</option>
+                <option value="">Selecione</option>
+                {convenios.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700">
                 Nome do Paciente
               </label>
               <input
                 type="text"
                 value={formData.nome_paciente}
-                onChange={(e) => setFormData(prev => ({ ...prev, nome_paciente: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                onChange={(e) =>
+                  setFormData({ ...formData, nome_paciente: e.target.value })
+                }
                 required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700">
                 Data da Consulta
               </label>
               <input
                 type="date"
                 value={formData.data_consulta}
-                onChange={(e) => setFormData(prev => ({ ...prev, data_consulta: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                onChange={(e) =>
+                  setFormData({ ...formData, data_consulta: e.target.value })
+                }
                 required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Atendimento
-              </label>
-              <select
-                value={formData.tipo}
-                onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                required
-              >
-                <option value="consulta">🩺 Consulta</option>
-                <option value="cirurgia">✂️ Cirurgia</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700">
                 Valor (R$)
               </label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.valor}
-                onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                onChange={(e) =>
+                  setFormData({ ...formData, valor: e.target.value })
+                }
                 required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               />
             </div>
 
-            <div className="md:col-span-2 flex gap-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 disabled:opacity-50 shadow-lg"
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Tipo
+              </label>
+              <select
+                value={formData.tipo}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    tipo: e.target.value as 'consulta' | 'cirurgia'
+                  })
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               >
-                {loading ? 'Salvando...' : 'Salvar'}
-              </button>
+                <option value="consulta">Consulta</option>
+                <option value="cirurgia">Cirurgia</option>
+              </select>
+            </div>
+
+            <div className="md:col-span-2 flex justify-end gap-3 mt-4">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-lg"
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
               >
                 Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                {loading ? 'Salvando...' : 'Salvar'}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Summary Card */}
-      <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-500 p-2 rounded-lg">
-              <DollarSign className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-green-800">Total do Período</h3>
-              <p className="text-sm text-green-600">{producoes.length} consultas registradas</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-green-700">R$ {totalPeriodo.toFixed(2)}</div>
-            <div className="text-sm text-green-600">Valor total</div>
-          </div>
-        </div>
-      </div>
+      <EditProducaoModal
+        producao={editingProducao}
+        isOpen={!!editingProducao}
+        onClose={() => setEditingProducao(null)}
+        onSave={loadData}
+      />
 
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Consultas Registradas</h3>
+      <ConfirmDeleteModal
+        isOpen={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={confirmDelete}
+        title="Excluir Produção"
+        message="Tem certeza que deseja excluir este registro de produção? Esta ação não pode ser desfeita."
+        loading={deleteLoading}
+      />
+    </div>
+  );
+};
+
+          </form>
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Médico</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Convênio</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Paciente</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Data</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Valor</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {producoes.map((producao, index) => (
-                <tr key={producao.id} className={`transition-colors duration-150 hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                  <td className="px-6 py-4 flex items-center gap-3">
-                    <div className="bg-blue-100 p-1.5 rounded-full">
-                      <User size={14} className="text-blue-600" />
-                    </div>
-                    <span className="font-medium text-gray-900">{producao.medico?.nome}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-green-100 p-1.5 rounded-full">
-                        <Building size={14} className="text-green-600" />
-                      </div>
-                      <span className="text-gray-700">{producao.convenio?.nome}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                      producao.tipo === 'cirurgia' 
-                        ? 'bg-red-100 text-red-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {producao.tipo === 'cirurgia' ? (
-                        <>
-                          <Scissors size={12} />
-                          Cirurgia
-                        </>
-                      ) : (
-                        <>
-                          <Stethoscope size={12} />
-                          Consulta
-                        </>
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700">{producao.nome_paciente}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-gray-400" />
-                      <span className="text-gray-700">{new Date(producao.data_consulta).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="font-bold text-green-600 text-lg">R$ {producao.valor.toFixed(2)}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
