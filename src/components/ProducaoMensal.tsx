@@ -133,6 +133,11 @@ export const ProducaoMensalComponent: React.FC = () => {
   const totalMedicoSelecionado = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
   const cincoPorCentoMedico = totalMedicoSelecionado * 0.05;
 
+  // Função para formatar data corretamente (evita problema de timezone)
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('pt-BR');
+  };
   if (activeView === 'report') {
     return (
       <div className="space-y-6">
@@ -511,7 +516,7 @@ export const ProducaoMensalComponent: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Calendar size={14} className="text-gray-400" />
-                          <span className="text-gray-700">{new Date(producao.data_consulta).toLocaleDateString('pt-BR')}</span>
+                          <span className="text-gray-700">{formatDate(producao.data_consulta)}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -523,6 +528,30 @@ export const ProducaoMensalComponent: React.FC = () => {
               </tbody>
             </table>
           </div>
+          
+          {/* Footer com totais quando médico selecionado */}
+          {selectedMedico && filteredProducoes.length > 0 && (
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  Total de {filteredProducoes.length} consulta{filteredProducoes.length !== 1 ? 's' : ''} para {medicos.find(m => m.id === parseInt(selectedMedico))?.nome}
+                </div>
+                <div className="flex gap-6 items-center">
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-gray-900">
+                      Total: R$ {totalMedicoSelecionado.toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="text-right bg-purple-100 px-4 py-2 rounded-lg">
+                    <div className="text-sm text-purple-600 font-medium">5% do Total</div>
+                    <div className="text-lg font-bold text-purple-700">
+                      R$ {cincoPorCentoMedico.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {filteredProducoes.length > 10 && (
             <div className="p-4 text-center border-t border-gray-200">
