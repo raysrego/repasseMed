@@ -47,39 +47,39 @@ export const ProducaoMensalComponent: React.FC = () => {
     setLoading(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const result = await dbHelpers.createProducaoMensal({
-        medico_id: parseInt(formData.medico_id),
-        convenio_id: parseInt(formData.convenio_id),
-        nome_paciente: formData.nome_paciente,
-        data_consulta: formData.data_consulta,
-        valor: parseFloat(formData.valor),
-        tipo: formData.tipo
-      });
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    await dbHelpers.createProducaoMensal({
+      medico_id: parseInt(formData.medico_id),
+      convenio_id: parseInt(formData.convenio_id),
+      nome_paciente: formData.nome_paciente,
+      data_consulta: formData.data_consulta, // <-- já está no formato YYYY-MM-DD
+      valor: parseFloat(formData.valor),
+      tipo: formData.tipo
+    });
 
       if (result.error) {
         console.error('Erro:', result.error);
       } else {
-        setFormData({
-          medico_id: '',
-          convenio_id: '',
-          nome_paciente: '',
-          data_consulta: '',
-          valor: '',
-          tipo: 'consulta'
-        });
+       setFormData({
+      medico_id: '',
+      convenio_id: '',
+      nome_paciente: '',
+      data_consulta: '',
+      valor: '',
+      tipo: 'consulta'
+    });
         setShowForm(false);
-        loadData();
-      }
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-    }
-    setLoading(false);
-  };
+          loadData();
+  } catch (error) {
+    console.error('Erro ao salvar produção:', error);
+  }
+
+  setLoading(false);
+};
 
   const handleEdit = (producao: ProducaoMensal) => {
     setEditingProducao(producao);
