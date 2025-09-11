@@ -16,6 +16,7 @@ export const ProducaoMensalComponent: React.FC = () => {
   const [editingProducao, setEditingProducao] = useState<ProducaoMensal | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [filtroMedicoId, setFiltroMedicoId] = useState<string>('');
   const [formData, setFormData] = useState({
     medico_id: '',
     convenio_id: '',
@@ -79,9 +80,39 @@ export const ProducaoMensalComponent: React.FC = () => {
     console.error('Erro ao salvar produção:', error);
   }
 
+   
   setLoading(false);
 };
 
+ // --- Cálculos do filtro ---
+  const producoesMedico = producoes.filter(
+    p => p.medico_id === Number(filtroMedicoId)
+  );
+  const totalMedico = producoesMedico.reduce((soma, p) => soma + Number(p.valor), 0);
+  const cincoPorCento = totalMedico * 0.05;
+return (
+    <div>
+      {/* Filtro por médico */}
+      <div style={{ marginBottom: '1rem' }}>
+        <label>Médico: </label>
+        <select
+          value={filtroMedicoId}
+          onChange={e => setFiltroMedicoId(e.target.value)}
+        >
+          <option value="">Selecione um médico</option>
+          {medicos.map(m => (
+            <option key={m.id} value={m.id}>{m.nome}</option>
+          ))}
+        </select>
+
+        {filtroMedicoId && (
+          <div style={{ marginTop: '1rem' }}>
+            <p>Total do médico: <strong>R$ {totalMedico.toFixed(2)}</strong></p>
+            <p>5% do total: <strong>R$ {cincoPorCento.toFixed(2)}</strong></p>
+          </div>
+        )}
+      </div>
+  
   const handleEdit = (producao: ProducaoMensal) => {
     setEditingProducao(producao);
   };
