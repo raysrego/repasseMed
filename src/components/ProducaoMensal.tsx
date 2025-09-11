@@ -135,9 +135,12 @@ export const ProducaoMensalComponent: React.FC = () => {
 
   // Função para formatar data corretamente (evita problema de timezone)
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR');
+    if (!dateString) return '';
+    // Se a data já tem formato YYYY-MM-DD, converte diretamente
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
   };
+
   if (activeView === 'report') {
     return (
       <div className="space-y-6">
