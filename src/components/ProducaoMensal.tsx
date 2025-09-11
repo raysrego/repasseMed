@@ -52,14 +52,15 @@ export const ProducaoMensalComponent: React.FC = () => {
   setLoading(true);
 
   try {
-    await dbHelpers.createProducaoMensal({
-      medico_id: parseInt(formData.medico_id),
-      convenio_id: parseInt(formData.convenio_id),
-      nome_paciente: formData.nome_paciente,
-      data_consulta: formData.data_consulta, // <-- já está no formato YYYY-MM-DD
-      valor: parseFloat(formData.valor),
-      tipo: formData.tipo
-    });
+  await dbHelpers.createProducaoMensal({
+  medico_id: parseInt(formData.medico_id),
+  convenio_id: parseInt(formData.convenio_id),
+  nome_paciente: formData.nome_paciente,
+  data_consulta: formData.data_consulta, // ← string pura (YYYY-MM-DD)
+  valor: parseFloat(formData.valor),
+  tipo: formData.tipo
+});
+
 
       if (result.error) {
         console.error('Erro:', result.error);
