@@ -28,6 +28,9 @@ export const ProducaoMensalComponent: React.FC = () => {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedMedico, setSelectedMedico] = useState<string>('');
+  const [dataInicio, setDataInicio] = useState<string>('');
+  const [dataFim, setDataFim] = useState<string>('');
+  const [selectedTipo, setSelectedTipo] = useState<string>('');
   const [formData, setFormData] = useState({
     medico_id: '',
     convenio_id: '',
@@ -124,9 +127,14 @@ export const ProducaoMensalComponent: React.FC = () => {
   };
 
   // Filtrar produções por médico selecionado
-  const filteredProducoes = selectedMedico 
-    ? producoes.filter(p => p.medico_id === parseInt(selectedMedico))
-    : producoes;
+  const filteredProducoes = producoes.filter(p => {
+    const matchesMedico = selectedMedico ? p.medico_id === parseInt(selectedMedico) : true;
+    const matchesDataInicio = dataInicio ? p.data_consulta >= dataInicio : true;
+    const matchesDataFim = dataFim ? p.data_consulta <= dataFim : true;
+    const matchesTipo = selectedTipo ? p.tipo === selectedTipo : true;
+    
+    return matchesMedico && matchesDataInicio && matchesDataFim && matchesTipo;
+  });
 
   // Calcular totais
   const totalPeriodo = producoes.reduce((sum, item) => sum + item.valor, 0);
@@ -214,32 +222,77 @@ export const ProducaoMensalComponent: React.FC = () => {
 
       {/* Filtro por médico */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-100 p-2 rounded-lg">
-              <User className="h-5 w-5 text-blue-600" />
+            <div className="bg-gray-100 p-2 rounded-lg">
+              <Filter className="h-5 w-5 text-gray-600" />
             </div>
-            <span className="font-semibold text-gray-800">Filtrar por Médico:</span>
+            <span className="font-semibold text-gray-800">Filtros:</span>
           </div>
-          <div className="max-w-xs">
-            <select
-              value={selectedMedico}
-              onChange={(e) => setSelectedMedico(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Todos os médicos</option>
-              {medicos.map(medico => (
-                <option key={medico.id} value={medico.id}>{medico.nome}</option>
-              ))}
-            </select>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Médico</label>
+              <select
+                value={selectedMedico}
+                onChange={(e) => setSelectedMedico(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Todos os médicos</option>
+                {medicos.map(medico => (
+                  <option key={medico.id} value={medico.id}>{medico.nome}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+              <select
+                value={selectedTipo}
+                onChange={(e) => setSelectedTipo(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Todos os tipos</option>
+                <option value="consulta">🩺 Consulta</option>
+                <option value="cirurgia">✂️ Cirurgia</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Data Início</label>
+              <input
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Data Fim</label>
+              <input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
           </div>
-          {selectedMedico && (
-            <button
-              onClick={() => setSelectedMedico('')}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-            >
-              Limpar Filtro
-            </button>
+          
+          {(selectedMedico || dataInicio || dataFim || selectedTipo) && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setSelectedMedico('');
+                  setDataInicio('');
+                  setDataFim('');
+                  setSelectedTipo('');
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
+                Limpar Todos os Filtros
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -434,10 +487,10 @@ export const ProducaoMensalComponent: React.FC = () => {
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-semibold text-gray-900">
-                {selectedMedico 
-                  ? `Produções de ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}` 
-                  : 'Produções Recentes'
-                }
+                Produções
+                {selectedMedico && ` - ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
+                {selectedTipo && ` - ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}`}
+                {(dataInicio || dataFim) && ` - Período: ${dataInicio ? formatDate(dataInicio) : 'Início'} até ${dataFim ? formatDate(dataFim) : 'Fim'}`}
               </h4>
               <div className="text-sm text-gray-500">
                 {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''} encontrado{filteredProducoes.length !== 1 ? 's' : ''}
@@ -533,11 +586,12 @@ export const ProducaoMensalComponent: React.FC = () => {
           </div>
           
           {/* Footer com totais quando médico selecionado */}
-          {selectedMedico && filteredProducoes.length > 0 && (
+          {(selectedMedico || dataInicio || dataFim || selectedTipo) && filteredProducoes.length > 0 && (
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-600">
-                  Total de {filteredProducoes.length} consulta{filteredProducoes.length !== 1 ? 's' : ''} para {medicos.find(m => m.id === parseInt(selectedMedico))?.nome}
+                  Total de {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''}
+                  {selectedMedico && ` para ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
                 </div>
                 <div className="flex gap-6 items-center">
                   <div className="text-right">
@@ -545,12 +599,14 @@ export const ProducaoMensalComponent: React.FC = () => {
                       Total: R$ {totalMedicoSelecionado.toFixed(2)}
                     </div>
                   </div>
-                  <div className="text-right bg-purple-100 px-4 py-2 rounded-lg">
-                    <div className="text-sm text-purple-600 font-medium">5% do Total</div>
-                    <div className="text-lg font-bold text-purple-700">
-                      R$ {cincoPorCentoMedico.toFixed(2)}
+                  {selectedMedico && (
+                    <div className="text-right bg-purple-100 px-4 py-2 rounded-lg">
+                      <div className="text-sm text-purple-600 font-medium">5% do Total</div>
+                      <div className="text-lg font-bold text-purple-700">
+                        R$ {cincoPorCentoMedico.toFixed(2)}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
