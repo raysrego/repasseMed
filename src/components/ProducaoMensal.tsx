@@ -9,7 +9,8 @@ import {
   FileText,
   BarChart3,
   Stethoscope,
-  Scissors
+  Scissors,
+  Filter
 } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../types';
