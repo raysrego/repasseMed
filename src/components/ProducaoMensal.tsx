@@ -247,99 +247,75 @@ export const ProducaoMensalComponent: React.FC = () => {
           >
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Médico
-              </label>
-              <select
-                value={formData.medico_id}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, medico_id: e.target.value }))
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                required
-              >
-                <option value="">Selecione o médico</option>
-                {medicos.map((medico) => (
-                  <option key={medico.id} value={medico.id}>
-                    {medico.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Médico
-              </label>
-              <select
-                value={formData.medico_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, medico_id: e.target.value })
-                }
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              >
-                <option value="">Selecione</option>
-                {medicos.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
                 Convênio
               </label>
               <select
                 value={formData.convenio_id}
                 onChange={(e) =>
-                  setFormData({ ...formData, convenio_id: e.target.value })
+                  setFormData((prev) => ({ ...prev, convenio_id: e.target.value }))
                 }
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               >
-                <option value="">Selecione</option>
-                {convenios.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
+                <option value="">Selecione o convênio</option>
+                {convenios.map((convenio) => (
+                  <option key={convenio.id} value={convenio.id}>
+                    {convenio.nome}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Atendimento
+              </label>
+              <select
+                value={formData.tipo}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))
+                }
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                required
+              >
+                <option value="consulta">🩺 Consulta</option>
+                <option value="cirurgia">✂️ Cirurgia</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nome do Paciente
               </label>
               <input
                 type="text"
                 value={formData.nome_paciente}
                 onChange={(e) =>
-                  setFormData({ ...formData, nome_paciente: e.target.value })
+                  setFormData((prev) => ({ ...prev, nome_paciente: e.target.value }))
                 }
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="Nome completo do paciente"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Data da Consulta
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data do Atendimento
               </label>
               <input
                 type="date"
                 value={formData.data_consulta}
                 onChange={(e) =>
-                  setFormData({ ...formData, data_consulta: e.target.value })
+                  setFormData((prev) => ({ ...prev, data_consulta: e.target.value }))
                 }
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Valor (R$)
               </label>
               <input
@@ -347,30 +323,12 @@ export const ProducaoMensalComponent: React.FC = () => {
                 step="0.01"
                 value={formData.valor}
                 onChange={(e) =>
-                  setFormData({ ...formData, valor: e.target.value })
+                  setFormData((prev) => ({ ...prev, valor: e.target.value }))
                 }
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="0,00"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Tipo
-              </label>
-              <select
-                value={formData.tipo}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    tipo: e.target.value as 'consulta' | 'cirurgia'
-                  })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              >
-                <option value="consulta">Consulta</option>
-                <option value="cirurgia">Cirurgia</option>
-              </select>
             </div>
 
             <div className="md:col-span-2 flex justify-end gap-3 mt-4">
@@ -384,12 +342,134 @@ export const ProducaoMensalComponent: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
               >
-                {loading ? 'Salvando...' : 'Salvar'}
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={16} />
+                    Salvar Consulta
+                  </>
+                )}
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Lista de Produções Recentes */}
+      {!showForm && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h4 className="text-lg font-semibold text-gray-900">Produções Recentes</h4>
+              <div className="text-sm text-gray-500">
+                {producoes.length} registro{producoes.length !== 1 ? 's' : ''} encontrado{producoes.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Médico</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Convênio</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Paciente</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Data</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Valor</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span className="text-gray-500">Carregando dados...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : producoes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      <div className="flex flex-col items-center gap-3">
+                        <FileText className="h-12 w-12 text-gray-300" />
+                        <span className="text-lg font-medium">Nenhuma produção cadastrada</span>
+                        <span className="text-sm">Clique em "Nova Consulta" para começar</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  producoes.slice(0, 10).map((producao, index) => (
+                    <tr key={producao.id} className={`transition-colors duration-150 hover:bg-blue-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-blue-100 p-1.5 rounded-full">
+                            <User size={14} className="text-blue-600" />
+                          </div>
+                          <span className="font-medium text-gray-900">{producao.medico?.nome}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-green-100 p-1.5 rounded-full">
+                            <Building size={14} className="text-green-600" />
+                          </div>
+                          <span className="text-gray-700">{producao.convenio?.nome}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
+                          producao.tipo === 'cirurgia' 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {producao.tipo === 'cirurgia' ? (
+                            <>
+                              <Scissors size={12} />
+                              Cirurgia
+                            </>
+                          ) : (
+                            <>
+                              <Stethoscope size={12} />
+                              Consulta
+                            </>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-700">{producao.nome_paciente}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} className="text-gray-400" />
+                          <span className="text-gray-700">{new Date(producao.data_consulta).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-bold text-green-600 text-lg">R$ {producao.valor.toFixed(2)}</span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          {producoes.length > 10 && (
+            <div className="p-4 text-center border-t border-gray-200">
+              <button
+                onClick={() => setActiveView('report')}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Ver todos os {producoes.length} registros no relatório →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
