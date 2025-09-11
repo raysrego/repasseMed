@@ -360,4 +360,99 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit,
                           <User size={14} className="text-blue-600" />
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">{repasse.medico?.
+                          <div className="font-semibold text-gray-900">{repasse.medico?.nome}</div>
+                          {repasse.medico?.crm && (
+                            <div className="text-sm text-gray-500">CRM: {repasse.medico.crm}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    {activeTab === 'convenio' && (
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-green-100 p-1.5 rounded-full print:hidden">
+                            <CreditCard size={14} className="text-green-600" />
+                          </div>
+                          <span className="font-medium text-gray-900">{repasse.convenio?.nome}</span>
+                        </div>
+                      </td>
+                    )}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-full print:hidden ${
+                          repasse.tipo === 'cirurgia' 
+                            ? 'bg-red-100' 
+                            : 'bg-blue-100'
+                        }`}>
+                          {repasse.tipo === 'cirurgia' ? (
+                            <Scissors size={14} className="text-red-600" />
+                          ) : (
+                            <Stethoscope size={14} className="text-blue-600" />
+                          )}
+                        </div>
+                        <span className={`font-medium capitalize ${
+                          repasse.tipo === 'cirurgia' 
+                            ? 'text-red-700' 
+                            : 'text-blue-700'
+                        }`}>
+                          {repasse.tipo}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-purple-100 p-1.5 rounded-full print:hidden">
+                          <User size={14} className="text-purple-600" />
+                        </div>
+                        <span className="font-medium text-gray-900">{repasse.nome_paciente}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-indigo-100 p-1.5 rounded-full print:hidden">
+                          <Building size={14} className="text-indigo-600" />
+                        </div>
+                        <span className="font-medium text-gray-900">{repasse.hospital?.nome}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-orange-100 p-1.5 rounded-full print:hidden">
+                          <Calendar size={14} className="text-orange-600" />
+                        </div>
+                        <span className="font-medium text-gray-900">
+                          {new Date(repasse.data_cirurgia).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-green-100 p-1.5 rounded-full print:hidden">
+                          <DollarSign size={14} className="text-green-600" />
+                        </div>
+                        <span className="font-bold text-green-700">
+                          R$ {repasse.valor.toFixed(2)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 print:hidden">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => onEdit(repasse)}
+                          className={`p-2 rounded-lg transition-colors duration-200 ${
+                            activeTab === 'convenio'
+                              ? 'text-blue-600 hover:bg-blue-50'
+                              : 'text-purple-600 hover:bg-purple-50'
+                          }`}
+                          title="Editar"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => onDelete(repasse.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
