@@ -266,7 +266,7 @@ export const ProducaoMensalComponent: React.FC = () => {
               </select>
             </div>
 
-            {            <div>
+             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Médico
               </label>
