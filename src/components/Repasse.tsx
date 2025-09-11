@@ -39,7 +39,7 @@ export const RepasseComponent: React.FC = () => {
     data_cirurgia: '',
     valor: '',
     tipo: 'consulta' as 'consulta' | 'cirurgia'
-  });</parameter>
+  });
 
   useEffect(() => {
     loadData();
@@ -374,8 +374,14 @@ export const RepasseComponent: React.FC = () => {
                 Médico
               </label>
               <select
-                value={formData.medico_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, medico_id: e.target.value }))}
+                value={activeTab === 'convenio' ? formDataConvenio.medico_id : formData.medico_id}
+                onChange={(e) => {
+                  if (activeTab === 'convenio') {
+                    setFormDataConvenio(prev => ({ ...prev, medico_id: e.target.value }));
+                  } else {
+                    setFormData(prev => ({ ...prev, medico_id: e.target.value }));
+                  }
+                }}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
               >
@@ -392,8 +398,8 @@ export const RepasseComponent: React.FC = () => {
                   Convênio
                 </label>
                 <select
-                  value={formData.convenio_id}
-                  onChange={(e) => setFormData(prev => ({ ...prev, convenio_id: e.target.value }))}
+                  value={formDataConvenio.convenio_id}
+                  onChange={(e) => setFormDataConvenio(prev => ({ ...prev, convenio_id: e.target.value }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   required
                 >
@@ -414,12 +420,14 @@ export const RepasseComponent: React.FC = () => {
                   </div>
                 </label>
                 <select
-                  value={formData.tipo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
+                  value={formData.tipo_procedimento}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tipo_procedimento: e.target.value as 'consulta' | 'onda_choque' | 'infiltracao' | 'cirurgia' }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   required
                 >
                   <option value="consulta">🩺 Consulta</option>
+                  <option value="onda_choque">🌊 Onda de Choque</option>
+                  <option value="infiltracao">💉 Infiltração</option>
                   <option value="cirurgia">✂️ Cirurgia</option>
                 </select>
               </div>
@@ -431,29 +439,153 @@ export const RepasseComponent: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={formData.nome_paciente}
-                onChange={(e) => setFormData(prev => ({ ...prev, nome_paciente: e.target.value }))}
+                value={activeTab === 'convenio' ? formDataConvenio.nome_paciente : formData.nome_paciente}
+                onChange={(e) => {
+                  if (activeTab === 'convenio') {
+                    setFormDataConvenio(prev => ({ ...prev, nome_paciente: e.target.value }));
+                  } else {
+                    setFormData(prev => ({ ...prev, nome_paciente: e.target.value }));
+                  }
+                }}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
               />
             </div>
 
+            {activeTab === 'convenio' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hospital
+                </label>
+                <select
+                  value={formDataConvenio.hospital_id}
+                  onChange={(e) => setFormDataConvenio(prev => ({ ...prev, hospital_id: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  required
+                >
+                  <option value="">Selecione o hospital</option>
+                  {hospitais.map(hospital => (
+                    <option key={hospital.id} value={hospital.id}>{hospital.nome}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Hospital
+                Data da Cirurgia
               </label>
-              <select
-                value={formData.hospital_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, hospital_id: e.target.value }))}
+              <input
+                type="date"
+                value={activeTab === 'convenio' ? formDataConvenio.data_cirurgia : formData.data_cirurgia}
+                onChange={(e) => {
+                  if (activeTab === 'convenio') {
+                    setFormDataConvenio(prev => ({ ...prev, data_cirurgia: e.target.value }));
+                  } else {
+                    setFormData(prev => ({ ...prev, data_cirurgia: e.target.value }));
+                  }
+                }}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
-              >
-                <option value="">Selecione o hospital</option>
-                {hospitais.map(hospital => (
-                  <option key={hospital.id} value={hospital.id}>{hospital.nome}</option>
-                ))}
-              </select>
+              />
             </div>
+
+            {activeTab === 'convenio' ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipo
+                  </label>
+                  <select
+                    value={formDataConvenio.tipo}
+                    onChange={(e) => setFormDataConvenio(prev => ({ ...prev, tipo: e.target.value as 'consulta' | 'cirurgia' }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  >
+                    <option value="consulta">Consulta</option>
+                    <option value="cirurgia">Cirurgia</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Valor
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formDataConvenio.valor}
+                    onChange={(e) => setFormDataConvenio(prev => ({ ...prev, valor: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantidade
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.quantidade}
+                    onChange={(e) => setFormData(prev => ({ ...prev, quantidade: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Forma de Pagamento
+                  </label>
+                  <select
+                    value={formData.forma_pagamento}
+                    onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value as 'credito' | 'pix' | 'debito' | 'especie' }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  >
+                    <option value="pix">PIX</option>
+                    <option value="credito">Cartão de Crédito</option>
+                    <option value="debito">Cartão de Débito</option>
+                    <option value="especie">Espécie</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Valor Unitário
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.valor_unitario}
+                    onChange={(e) => setFormData(prev => ({ ...prev, valor_unitario: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="md:col-span-2 flex gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Salvando...' : 'Salvar Repasse'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors duration-200"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="p-6 border-b border-gray-200">
