@@ -5,8 +5,10 @@ import { Repasse, Medico, Convenio, Hospital as HospitalType } from '../types';
 import { RepasseReport } from './Reports/RepasseReport';
 import { EditRepasseModal } from './Modals/EditRepasseModal';
 import { ConfirmDeleteModal } from './Modals/ConfirmDeleteModal';
+import { useAuth } from './Auth/AuthContext';
 
 export const RepasseComponent: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'convenio' | 'particular'>('convenio');
   const [activeView, setActiveView] = useState<'form' | 'report'>('form');
   const [repasses, setRepasses] = useState<Repasse[]>([]);
@@ -118,6 +120,9 @@ export const RepasseComponent: React.FC = () => {
     setActiveView('form');
   };
 
+  // Verificar se o usuário tem acesso ao repasse particular
+  const hasParticularAccess = user?.email === 'rayannyrego@gmail.com';
+
   const filteredRepasses = repasses.filter(repasse => 
     activeTab === 'convenio' ? !repasse.is_particular : repasse.is_particular
   );
@@ -151,17 +156,19 @@ export const RepasseComponent: React.FC = () => {
               <Building size={16} />
               Repasse por Convênio
             </button>
-            <button
-              onClick={() => setActiveTab('particular')}
-              className={`py-3 px-6 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
-                activeTab === 'particular'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <UserCheck size={16} />
-              Repasse Particular
-            </button>
+            {hasParticularAccess && (
+              <button
+                onClick={() => setActiveTab('particular')}
+                className={`py-3 px-6 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
+                  activeTab === 'particular'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <UserCheck size={16} />
+                Repasse Particular
+              </button>
+            )}
           </nav>
         </div>
 
@@ -170,6 +177,7 @@ export const RepasseComponent: React.FC = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onNew={handleNew}
+          hasParticularAccess={hasParticularAccess}
         />
 
         <EditRepasseModal
@@ -237,17 +245,19 @@ export const RepasseComponent: React.FC = () => {
             <Building size={16} />
             Repasse por Convênio
           </button>
-          <button
-            onClick={() => setActiveTab('particular')}
-            className={`py-3 px-6 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
-              activeTab === 'particular'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <UserCheck size={16} />
-            Repasse Particular
-          </button>
+          {hasParticularAccess && (
+            <button
+              onClick={() => setActiveTab('particular')}
+              className={`py-3 px-6 rounded-lg font-medium text-sm flex items-center gap-2 transition-all duration-200 ${
+                activeTab === 'particular'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <UserCheck size={16} />
+              Repasse Particular
+            </button>
+          )}
         </nav>
       </div>
 

@@ -9,9 +9,10 @@ interface RepasseReportProps {
   onEdit: (repasse: Repasse) => void;
   onDelete: (id: number) => void;
   onNew: () => void;
+  hasParticularAccess: boolean;
 }
 
-export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit, onDelete, onNew }) => {
+export const RepasseReport: React.FC<RepasseReportProps> = ({ activeTab, onEdit, onDelete, onNew, hasParticularAccess }) => {
   const [repasses, setRepasses] = useState<Repasse[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
