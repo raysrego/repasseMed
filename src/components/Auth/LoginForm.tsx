@@ -197,13 +197,13 @@ export const LoginForm: React.FC = () => {
 
         {/* Demo credentials */}
         <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg">
-          <h4 className="font-medium text-yellow-800 mb-2">Credenciais de Demonstração:</h4>
+          <h4 className="font-medium text-yellow-800 mb-2">Use suas Credenciais:</h4>
           <p className="text-sm text-yellow-700">
-            <strong>Email:</strong> rayannyrego@gmail.com<br />
-            <strong>Senha:</strong> Incom123
+            <strong>Email:</strong> incom.slz@gmail.com<br />
+            <strong>Senha:</strong> incom123
           </p>
           <p className="text-xs text-yellow-600 mt-2">
-            Se o usuário não existir, use a opção "Criar conta" acima para cadastrar-se.
+            Ou clique em "Criar conta" acima para cadastrar-se.
           </p>
         </div>
       </div>
