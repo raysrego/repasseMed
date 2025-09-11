@@ -27,7 +27,12 @@ export const RepasseComponent: React.FC = () => {
     hospital_id: '',
     data_cirurgia: '',
     valor: '',
-    tipo: 'consulta' as 'consulta' | 'cirurgia'
+    tipo: 'consulta' as 'consulta' | 'cirurgia',
+    categoria_particular: 'consulta_onda' as 'consulta_onda' | 'infiltracao_cirurgia',
+    tipo_procedimento: 'consulta',
+    quantidade: '1',
+    forma_pagamento: 'pix' as 'credito' | 'pix' | 'debito' | 'especie',
+    valor_unitario: ''
   });
 
   useEffect(() => {
@@ -58,6 +63,11 @@ export const RepasseComponent: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     
+    // Calcular valor total para particulares
+    const valorFinal = activeTab === 'particular' 
+      ? parseFloat(formData.valor_unitario) * parseInt(formData.quantidade)
+      : parseFloat(formData.valor);
+    
     try {
       const result = await dbHelpers.createRepasse({
         medico_id: parseInt(formData.medico_id),
@@ -65,9 +75,14 @@ export const RepasseComponent: React.FC = () => {
         nome_paciente: formData.nome_paciente,
         hospital_id: parseInt(formData.hospital_id),
         data_cirurgia: formData.data_cirurgia,
-        valor: parseFloat(formData.valor),
+        valor: valorFinal,
         tipo: formData.tipo,
-        is_particular: activeTab === 'particular'
+        is_particular: activeTab === 'particular',
+        categoria_particular: activeTab === 'particular' ? formData.categoria_particular : undefined,
+        tipo_procedimento: activeTab === 'particular' ? formData.tipo_procedimento : undefined,
+        quantidade: activeTab === 'particular' ? parseInt(formData.quantidade) : undefined,
+        forma_pagamento: activeTab === 'particular' ? formData.forma_pagamento : undefined,
+        valor_unitario: activeTab === 'particular' ? parseFloat(formData.valor_unitario) : undefined
       });
 
       if (result.error) {
@@ -80,7 +95,12 @@ export const RepasseComponent: React.FC = () => {
           hospital_id: '',
           data_cirurgia: '',
           valor: '',
-          tipo: 'consulta'
+          tipo: 'consulta',
+          categoria_particular: 'consulta_onda',
+          tipo_procedimento: 'consulta',
+          quantidade: '1',
+          forma_pagamento: 'pix',
+          valor_unitario: ''
         });
         setShowForm(false);
         loadData();
@@ -127,7 +147,54 @@ export const RepasseComponent: React.FC = () => {
     activeTab === 'convenio' ? !repasse.is_particular : repasse.is_particular
   );
 
-  const totalPeriodo = filteredRepasses.reduce((sum, item) => sum + item.valor, 0);
+  // Separar repasses particulares por categoria
+  const repassesConsultaOnda = filteredRepasses.filter(r => r.categoria_particular === 'consulta_onda');
+  const repassesInfiltracao = filteredRepasses.filter(r => r.categoria_particular === 'infiltracao_cirurgia');
+  
+  const totalConsultaOnda = repassesConsultaOnda.reduce((sum, item) => sum + item.valor, 0);
+  const totalInfiltracao = repassesInfiltracao.reduce((sum, item) => sum + item.valor, 0);
+  const totalPeriodo = activeTab === 'convenio' ? filteredRepasses.reduce((sum, item) => sum + item.valor, 0) : totalConsultaOnda + totalInfiltracao;
+
+  // Calcular taxas para consulta/onda de choque (16,33% + taxa pagamento)
+  const calcularTaxasConsultaOnda = () => {
+    const taxaNotaFiscal = 0.1633; // 16,33%
+    let totalTaxas = 0;
+    
+    repassesConsultaOnda.forEach(repasse => {
+      let taxaPagamento = 0;
+      switch (repasse.forma_pagamento) {
+        case 'credito': taxaPagamento = 0.025; break; // 2,5%
+        case 'debito': taxaPagamento = 0.018; break;  // 1,8%
+        case 'pix':
+        case 'especie': taxaPagamento = 0; break;     // 0%
+      }
+      totalTaxas += repasse.valor * (taxaNotaFiscal + taxaPagamento);
+    });
+    
+    return totalTaxas;
+  };
+
+  // Calcular taxas para infiltração/cirurgia (10,93% + taxa pagamento)
+  const calcularTaxasInfiltracao = () => {
+    const taxaNotaFiscal = 0.1093; // 10,93%
+    let totalTaxas = 0;
+    
+    repassesInfiltracao.forEach(repasse => {
+      let taxaPagamento = 0;
+      switch (repasse.forma_pagamento) {
+        case 'credito': taxaPagamento = 0.025; break; // 2,5%
+        case 'debito': taxaPagamento = 0.018; break;  // 1,8%
+        case 'pix':
+        case 'especie': taxaPagamento = 0; break;     // 0%
+      }
+      totalTaxas += repasse.valor * (taxaNotaFiscal + taxaPagamento);
+    });
+    
+    return totalTaxas;
+  };
+
+  const taxasConsultaOnda = calcularTaxasConsultaOnda();
+  const taxasInfiltracao = calcularTaxasInfiltracao();
 
   if (activeView === 'report') {
     return (
