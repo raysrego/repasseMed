@@ -15,6 +15,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
   const [selectedMedico, setSelectedMedico] = useState<string>('');
+  const [selectedTipo, setSelectedTipo] = useState<string>('');
   const [dataInicio, setDataInicio] = useState<string>('');
   const [dataFim, setDataFim] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -25,7 +26,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
 
   useEffect(() => {
     filterData();
-  }, [selectedMedico, dataInicio, dataFim]);
+  }, [selectedMedico, selectedTipo, dataInicio, dataFim]);
 
   const loadData = async () => {
     setLoading(true);
@@ -46,7 +47,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
   };
 
   const filterData = async () => {
-    if (!selectedMedico && !dataInicio && !dataFim) {
+    if (!selectedMedico && !selectedTipo && !dataInicio && !dataFim) {
       loadData();
       return;
     }
@@ -63,6 +64,10 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
 
       if (selectedMedico) {
         query = query.eq('medico_id', parseInt(selectedMedico));
+      }
+
+      if (selectedTipo) {
+        query = query.eq('tipo', selectedTipo);
       }
 
       if (dataInicio) {
@@ -84,6 +89,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
   const filteredProducoes = producoes;
 
   const totalGeral = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
+  const cincoPorCentoTotal = totalGeral * 0.05;
 
   const handlePrint = () => {
     const printContent = document.getElementById('relatorio-producao');
@@ -109,11 +115,13 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                 <h1>Relatório de Produção Mensal</h1>
                 <p>Data: ${new Date().toLocaleDateString('pt-BR')}</p>
                 ${selectedMedico ? `<p>Médico: ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}</p>` : ''}
+                ${selectedTipo ? `<p>Tipo: ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}</p>` : ''}
                 ${dataInicio || dataFim ? `<p>Período: ${dataInicio ? new Date(dataInicio).toLocaleDateString('pt-BR') : 'Início'} até ${dataFim ? new Date(dataFim).toLocaleDateString('pt-BR') : 'Fim'}</p>` : ''}
               </div>
               ${printContent.innerHTML}
               <div class="total">
                 <p>Total Geral: R$ ${totalGeral.toFixed(2)}</p>
+                <p>5% do Total: R$ ${cincoPorCentoTotal.toFixed(2)}</p>
                 <p>Quantidade de Consultas: ${filteredProducoes.length}</p>
               </div>
             </body>
@@ -178,8 +186,8 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
         <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Média por Consulta</p>
-              <p className="text-2xl font-bold">R$ {filteredProducoes.length > 0 ? (totalGeral / filteredProducoes.length).toFixed(2) : '0.00'}</p>
+              <p className="text-purple-100 text-sm font-medium">5% do Total</p>
+              <p className="text-2xl font-bold">R$ {cincoPorCentoTotal.toFixed(2)}</p>
             </div>
             <div className="bg-white/20 p-3 rounded-lg">
               <TrendingUp className="h-6 w-6" />
@@ -209,6 +217,18 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                 {medicos.map(medico => (
                   <option key={medico.id} value={medico.id}>{medico.nome}</option>
                 ))}
+              </select>
+            </div>
+            <div className="max-w-xs">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+              <select
+                value={selectedTipo}
+                onChange={(e) => setSelectedTipo(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Todos os tipos</option>
+                <option value="consulta">🩺 Consulta</option>
+                <option value="cirurgia">✂️ Cirurgia</option>
               </select>
             </div>
             <div className="flex gap-2 items-end">
@@ -377,9 +397,20 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
               <div className="text-sm text-gray-600">
                 Exibindo {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''}
                 {selectedMedico && ` para ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
+                {selectedTipo && ` - ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}`}
               </div>
-              <div className="text-lg font-bold text-gray-900">
-                Total: R$ {totalGeral.toFixed(2)}
+              <div className="flex gap-6 items-center">
+                <div className="text-right">
+                  <div className="text-lg font-bold text-gray-900">
+                    Total: R$ {totalGeral.toFixed(2)}
+                  </div>
+                </div>
+                <div className="text-right bg-purple-100 px-4 py-2 rounded-lg">
+                  <div className="text-sm text-purple-600 font-medium">5% do Total</div>
+                  <div className="text-lg font-bold text-purple-700">
+                    R$ {cincoPorCentoTotal.toFixed(2)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
