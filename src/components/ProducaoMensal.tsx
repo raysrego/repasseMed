@@ -65,6 +65,18 @@ export const ProducaoMensalComponent: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação adicional
+    if (!formData.medico_id) {
+      alert('Por favor, selecione um médico');
+      return;
+    }
+    
+    if (!formData.convenio_id) {
+      alert('Por favor, selecione um convênio');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -79,6 +91,7 @@ export const ProducaoMensalComponent: React.FC = () => {
 
       if (result.error) {
         console.error('Erro:', result.error);
+        alert('Erro ao salvar: ' + result.error.message);
       } else {
         setFormData({
           medico_id: '',
@@ -93,6 +106,7 @@ export const ProducaoMensalComponent: React.FC = () => {
       }
     } catch (error) {
       console.error('Erro ao salvar produção:', error);
+      alert('Erro ao salvar produção');
     }
 
     setLoading(false);
@@ -368,6 +382,8 @@ export const ProducaoMensalComponent: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Formulário de Nova Consulta - COM CAMPO MÉDICO ADICIONADO */}
       {showForm && (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
           <div className="flex items-center gap-2 mb-6">
@@ -378,9 +394,31 @@ export const ProducaoMensalComponent: React.FC = () => {
             onSubmit={handleSubmit}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
+            {/* CAMPO MÉDICO ADICIONADO */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Convênio
+                Médico *
+              </label>
+              <select
+                value={formData.medico_id}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, medico_id: e.target.value }))
+                }
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                required
+              >
+                <option value="">Selecione o médico</option>
+                {medicos.map((medico) => (
+                  <option key={medico.id} value={medico.id}>
+                    {medico.nome} {medico.crm && `- CRM: ${medico.crm}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Convênio *
               </label>
               <select
                 value={formData.convenio_id}
@@ -401,7 +439,7 @@ export const ProducaoMensalComponent: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Atendimento
+                Tipo de Atendimento *
               </label>
               <select
                 value={formData.tipo}
@@ -418,7 +456,7 @@ export const ProducaoMensalComponent: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nome do Paciente
+                Nome do Paciente *
               </label>
               <input
                 type="text"
@@ -434,7 +472,7 @@ export const ProducaoMensalComponent: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Data do Atendimento
+                Data do Atendimento *
               </label>
               <input
                 type="date"
@@ -449,7 +487,7 @@ export const ProducaoMensalComponent: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Valor (R$)
+                Valor (R$) *
               </label>
               <input
                 type="number"
