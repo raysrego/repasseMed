@@ -45,7 +45,7 @@ export const ProducaoMensalComponent: React.FC = () => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+   const loadData = async () => {
     setLoading(true);
     try {
       const [producaoRes, medicosRes, conveniosRes] = await Promise.all([
@@ -54,7 +54,14 @@ export const ProducaoMensalComponent: React.FC = () => {
         dbHelpers.getConvenios()
       ]);
 
-      if (producaoRes.data) setProducoes(producaoRes.data);
+      if (producaoRes.data) {
+        // Garantir que as datas estejam no formato correto
+        const producoesCorrigidas = producaoRes.data.map(producao => ({
+          ...producao,
+          data_consulta: formatarDataParaYYYYMMDD(producao.data_consulta)
+        }));
+        setProducoes(producaoesCorrigidas); // Corrigido: usar producoesCorrigidas
+      }
       if (medicosRes.data) setMedicos(medicosRes.data);
       if (conveniosRes.data) setConvenios(conveniosRes.data);
     } catch (error) {
@@ -62,11 +69,111 @@ export const ProducaoMensalComponent: React.FC = () => {
     }
     setLoading(false);
   };
+  // Função para formatar qualquer data para YYYY-MM-DD
+  const formatarDataParaYYYYMMDD = (dataString: string): string => {
+    if (!dataString) return '';
+    
+    try {
+      // Se já estiver no formato YYYY-MM-DD, retorna como está
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dataString)) {
+        return dataString;
+      }
+      
+      // Se tiver timestamp, remove a parte do tempo
+      if (dataString.includes('T')) {
+        return dataString.split('T')[0];
+      }
+      
+      // Se estiver no formato DD/MM/YYYY, converte para YYYY-MM-DD
+      if (dataString.includes('/')) {
+        const [dia, mes, ano] = dataString.split('/');
+        // Valida se o ano tem 4 dígitos
+        if (ano.length === 4) {
+          return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        }
+      }
+      
+      // Para qualquer outro formato, tenta criar uma Date
+      const data = new Date(dataString);
+      if (!isNaN(data.getTime())) {
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        return `${ano}-${mes}-${dia}`;
+      }
+      
+      console.warn('Formato de data não reconhecido:', dataString);
+      return dataString;
+    } catch (error) {
+      console.error('Erro ao formatar data:', error, dataString);
+      return dataString;
+    }
+  };
+
+  // Função para formatar data para exibição DD/MM/YYYY
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return '';
+    
+    try {
+      // Primeiro garante que a data está no formato YYYY-MM-DD
+      const dataFormatada = formatarDataParaYYYYMMDD(dateString);
+      
+      const [ano, mes, dia] = dataFormatada.split('-');
+      
+      // Validação rigorosa: ano deve ter exatamente 4 dígitos
+      if (ano.length !== 4) {
+        console.error('Ano com formato inválido:', ano);
+        return 'Data inválida';
+      }
+      
+      // Valida se é um ano razoável (entre 1900 e 2100)
+      const anoNum = parseInt(ano);
+      if (anoNum < 1900 || anoNum > 2100) {
+        console.error('Ano fora do intervalo válido:', anoNum);
+        return 'Data inválida';
+      }
+      
+      return `${dia}/${mes}/${ano}`;
+    } catch (error) {
+      console.error('Erro ao formatar data para exibição:', error, dateString);
+      return 'Data inválida';
+    }
+  };
+
+  // Validação de data antes do envio
+  const validarData = (dataString: string): boolean => {
+    if (!dataString) return false;
+    
+    // Verifica formato YYYY-MM-DD
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataString)) {
+      return false;
+    }
+    
+    const [ano, mes, dia] = dataString.split('-').map(Number);
+    
+    // Valida ano com 4 dígitos e dentro de intervalo razoável
+    if (ano < 1900 || ano > 2100) {
+      return false;
+    }
+    
+    // Valida mês
+    if (mes < 1 || mes > 12) {
+      return false;
+    }
+    
+    // Valida dia
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+    if (dia < 1 || dia > diasNoMes) {
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação adicional
+    // Validações
     if (!formData.medico_id) {
       alert('Por favor, selecione um médico');
       return;
@@ -77,15 +184,31 @@ export const ProducaoMensalComponent: React.FC = () => {
       return;
     }
 
+    // Validação rigorosa da data
+    if (!validarData(formData.data_consulta)) {
+      alert('Por favor, insira uma data válida no formato DD/MM/AAAA');
+      return;
+    }
+
+    // Validação do valor
+    const valor = parseFloat(formData.valor);
+    if (isNaN(valor) || valor <= 0) {
+      alert('Por favor, insira um valor válido maior que zero');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Garante que a data está no formato correto antes de enviar
+      const dataConsultaFormatada = formatarDataParaYYYYMMDD(formData.data_consulta);
+      
       const result = await dbHelpers.createProducaoMensal({
         medico_id: parseInt(formData.medico_id),
         convenio_id: parseInt(formData.convenio_id),
-        nome_paciente: formData.nome_paciente,
-        data_consulta: formData.data_consulta,
-        valor: parseFloat(formData.valor),
+        nome_paciente: formData.nome_paciente.trim(),
+        data_consulta: dataConsultaFormatada,
+        valor: valor,
         tipo: formData.tipo
       });
 
@@ -144,8 +267,11 @@ export const ProducaoMensalComponent: React.FC = () => {
   // Filtrar produções por médico selecionado
   const filteredProducoes = producoes.filter(p => {
     const matchesMedico = selectedMedico ? p.medico_id === parseInt(selectedMedico) : true;
-    const matchesDataInicio = dataInicio ? p.data_consulta >= dataInicio : true;
-    const matchesDataFim = dataFim ? p.data_consulta <= dataFim : true;
+    
+    // Usar a data formatada para comparação
+    const dataConsulta = formatarDataParaYYYYMMDD(p.data_consulta);
+    const matchesDataInicio = dataInicio ? dataConsulta >= dataInicio : true;
+    const matchesDataFim = dataFim ? dataConsulta <= dataFim : true;
     const matchesTipo = selectedTipo ? p.tipo === selectedTipo : true;
     
     return matchesMedico && matchesDataInicio && matchesDataFim && matchesTipo;
@@ -155,26 +281,6 @@ export const ProducaoMensalComponent: React.FC = () => {
   const totalPeriodo = producoes.reduce((sum, item) => sum + item.valor, 0);
   const totalMedicoSelecionado = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
   const cincoPorCentoMedico = totalMedicoSelecionado * 0.05;
-
-  // Função para formatar data corretamente (evita problema de timezone)
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    
-    // Remove qualquer informação de hora se existir
-    const dateOnly = dateString.split('T')[0];
-    
-    // Verifica se está no formato YYYY-MM-DD
-    if (dateOnly.includes('-')) {
-      const parts = dateOnly.split('-');
-      if (parts.length === 3) {
-        const [year, month, day] = parts;
-        return `${day}/${month}/${year}`;
-      }
-    }
-    
-    // Se não conseguir processar, retorna a string original
-    return dateString;
-  };
 
   if (activeView === 'report') {
     return (
@@ -383,7 +489,7 @@ export const ProducaoMensalComponent: React.FC = () => {
         )}
       </div>
 
-      {/* Formulário de Nova Consulta - COM CAMPO MÉDICO ADICIONADO */}
+      {/* Formulário de Nova Consulta */}
       {showForm && (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
           <div className="flex items-center gap-2 mb-6">
@@ -394,7 +500,6 @@ export const ProducaoMensalComponent: React.FC = () => {
             onSubmit={handleSubmit}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
-            {/* CAMPO MÉDICO ADICIONADO */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Médico *
@@ -482,7 +587,11 @@ export const ProducaoMensalComponent: React.FC = () => {
                 }
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 required
+                max={new Date().toISOString().split('T')[0]} // Não permite datas futuras
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Formato: DD/MM/AAAA (o campo date já valida automaticamente)
+              </p>
             </div>
 
             <div>
@@ -492,6 +601,7 @@ export const ProducaoMensalComponent: React.FC = () => {
               <input
                 type="number"
                 step="0.01"
+                min="0.01"
                 value={formData.valor}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, valor: e.target.value }))
