@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, User, Calendar, DollarSign, Building, Edit, Trash2, Plus, Filter, Printer, TrendingUp, Stethoscope, Scissors } from 'lucide-react';
+import { FileText, User, Calendar, DollarSign, Building, CreditCard as Edit, Trash2, Plus, Filter, Printer, TrendingUp, Stethoscope, Scissors } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../../types';
 import { supabase } from '../../lib/supabase';
