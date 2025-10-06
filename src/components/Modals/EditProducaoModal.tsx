@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, FileText, Stethoscope, Scissors } from 'lucide-react';
+import { X, Save, Edit2, Stethoscope, Scissors } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../../types';
 
@@ -32,11 +32,17 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
     if (isOpen) {
       loadData();
       if (producao) {
+        const normalizeDate = (dateString: string) => {
+          if (!dateString) return '';
+          const dateOnly = dateString.split('T')[0];
+          return dateOnly;
+        };
+
         setFormData({
           medico_id: producao.medico_id.toString(),
           convenio_id: producao.convenio_id.toString(),
           nome_paciente: producao.nome_paciente,
-          data_consulta: producao.data_consulta,
+          data_consulta: normalizeDate(producao.data_consulta),
           valor: producao.valor.toString(),
           tipo: producao.tipo
         });
@@ -91,7 +97,7 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="bg-blue-500 p-2 rounded-lg">
-              <FileText className="h-5 w-5 text-white" />
+              <Edit2 className="h-5 w-5 text-white" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900">Editar Produção</h3>
           </div>

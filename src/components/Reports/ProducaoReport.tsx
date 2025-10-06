@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, User, Calendar, DollarSign, Building, CreditCard as Edit, Trash2, Plus, Filter, Printer, TrendingUp, Stethoscope, Scissors } from 'lucide-react';
+import { FileText, User, Calendar, DollarSign, Building, Pencil, Trash2, Plus, Filter, Printer, TrendingUp, Stethoscope, Scissors } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../../types';
 import { supabase } from '../../lib/supabase';
@@ -382,7 +382,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200 hover:scale-110"
                           title="Editar"
                         >
-                          <Edit size={16} />
+                          <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => onDelete(producao.id)}
