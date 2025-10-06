@@ -91,6 +91,16 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
   const totalGeral = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
   const cincoPorCentoTotal = totalGeral * 0.05;
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const dateOnly = dateString.split('T')[0];
+    if (dateOnly.includes('-')) {
+      const [year, month, day] = dateOnly.split('-');
+      return `${day}/${month}/${year}`;
+    }
+    return dateString;
+  };
+
   const handlePrint = () => {
     const printContent = document.getElementById('relatorio-producao');
     if (printContent) {
@@ -116,7 +126,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                 <p>Data: ${new Date().toLocaleDateString('pt-BR')}</p>
                 ${selectedMedico ? `<p>Médico: ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}</p>` : ''}
                 ${selectedTipo ? `<p>Tipo: ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}</p>` : ''}
-                ${dataInicio || dataFim ? `<p>Período: ${dataInicio ? new Date(dataInicio).toLocaleDateString('pt-BR') : 'Início'} até ${dataFim ? new Date(dataFim).toLocaleDateString('pt-BR') : 'Fim'}</p>` : ''}
+                ${dataInicio || dataFim ? `<p>Período: ${dataInicio ? formatDate(dataInicio) : 'Início'} até ${dataFim ? formatDate(dataFim) : 'Fim'}</p>` : ''}
               </div>
               ${printContent.innerHTML}
               <div class="total">
@@ -357,7 +367,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-gray-400 print:hidden" />
-                        <span className="font-medium text-gray-700">{new Date(producao.data_consulta).toLocaleDateString('pt-BR')}</span>
+                        <span className="font-medium text-gray-700">{formatDate(producao.data_consulta)}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
