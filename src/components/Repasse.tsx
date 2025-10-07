@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, DollarSign, User, Building, Guitar as Hospital, CreditCard, UserCheck, Stethoscope, Scissors, BarChart3 } from 'lucide-react';
+import { Calendar, Plus, DollarSign, User, Building, Guitar as Hospital, CreditCard, UserCheck, Stethoscope, Scissors, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { Repasse, Medico, Convenio, Hospital as HospitalType } from '../types';
 import { RepasseReport } from './Reports/RepasseReport';
@@ -21,6 +21,14 @@ export const RepasseComponent: React.FC = () => {
   const [editingRepasse, setEditingRepasse] = useState<Repasse | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  
+  // NOVO ESTADO: Mês de Referência
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().slice(0, 7); // 'YYYY-MM'
+  });
+  const [showMonthSelector, setShowMonthSelector] = useState(false);
+
   const [formData, setFormData] = useState({
     medico_id: '',
     nome_paciente: '',
@@ -28,7 +36,8 @@ export const RepasseComponent: React.FC = () => {
     tipo_procedimento: 'consulta' as 'consulta' | 'onda_choque' | 'infiltracao' | 'cirurgia',
     quantidade: '1',
     forma_pagamento: 'pix' as 'credito' | 'pix' | 'debito' | 'especie',
-    valor_unitario: ''
+    valor_unitario: '',
+    month_reference: '' // NOVO CAMPO
   });
 
   const [formDataConvenio, setFormDataConvenio] = useState({
@@ -38,18 +47,33 @@ export const RepasseComponent: React.FC = () => {
     hospital_id: '',
     data_cirurgia: '',
     valor: '',
-    tipo: 'consulta' as 'consulta' | 'cirurgia'
+    tipo: 'consulta' as 'consulta' | 'cirurgia',
+    month_reference: '' // NOVO CAMPO
   });
 
+  // Carregar dados quando o mês selecionado mudar
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedMonth]);
+
+  // Atualizar formData quando selectedMonth mudar
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      month_reference: selectedMonth
+    }));
+    setFormDataConvenio(prev => ({
+      ...prev,
+      month_reference: selectedMonth
+    }));
+  }, [selectedMonth]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      // MODIFICADO: Carregar repasses filtrando por month_reference
       const [repassesRes, medicosRes, conveniosRes, hospitaisRes] = await Promise.all([
-        dbHelpers.getRepasses(),
+        dbHelpers.getRepassesByMonth(selectedMonth), // Nova função
         dbHelpers.getMedicos(),
         dbHelpers.getConvenios(),
         dbHelpers.getHospitais()
@@ -63,6 +87,39 @@ export const RepasseComponent: React.FC = () => {
       console.error('Erro ao carregar dados:', error);
     }
     setLoading(false);
+  };
+
+  // FUNÇÃO NOVA: Gerar opções de meses
+  const generateMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+    
+    // Últimos 6 meses e próximos 3 meses
+    for (let i = -6; i <= 3; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const value = date.toISOString().slice(0, 7);
+      const label = date.toLocaleDateString('pt-BR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      months.push({ 
+        value, 
+        label: label.charAt(0).toUpperCase() + label.slice(1) 
+      });
+    }
+    
+    return months;
+  };
+
+  // FUNÇÃO NOVA: Formatar mês selecionado
+  const formatSelectedMonth = (month: string) => {
+    const [year, monthNum] = month.split('-');
+    const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+    return date.toLocaleDateString('pt-BR', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +138,8 @@ export const RepasseComponent: React.FC = () => {
           data_cirurgia: formDataConvenio.data_cirurgia,
           valor: parseFloat(formDataConvenio.valor),
           tipo: formDataConvenio.tipo,
-          is_particular: false
+          is_particular: false,
+          month_reference: formDataConvenio.month_reference // NOVO CAMPO
         });
       } else {
         // Para particulares, calcular valor total
@@ -102,7 +160,8 @@ export const RepasseComponent: React.FC = () => {
           data_cirurgia: formData.data_cirurgia,
           valor: valorTotal,
           tipo: tipo,
-          is_particular: true
+          is_particular: true,
+          month_reference: formData.month_reference // NOVO CAMPO
         });
       }
 
@@ -117,7 +176,8 @@ export const RepasseComponent: React.FC = () => {
           hospital_id: '',
           data_cirurgia: '',
           valor: '',
-          tipo: 'consulta'
+          tipo: 'consulta',
+          month_reference: selectedMonth // Reset para o mês atual
         });
         
         setFormData({
@@ -127,7 +187,8 @@ export const RepasseComponent: React.FC = () => {
           tipo_procedimento: 'consulta',
           quantidade: '1',
           forma_pagamento: 'pix',
-          valor_unitario: ''
+          valor_unitario: '',
+          month_reference: selectedMonth // Reset para o mês atual
         });
         
         setShowForm(false);
@@ -273,6 +334,7 @@ export const RepasseComponent: React.FC = () => {
           onDelete={handleDelete}
           onNew={handleNew}
           hasParticularAccess={hasParticularAccess}
+          selectedMonth={selectedMonth} // NOVO: Passar o mês selecionado
         />
 
         <EditRepasseModal
@@ -293,18 +355,51 @@ export const RepasseComponent: React.FC = () => {
       </div>
     );
   }
+
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="flex justify-between items-center">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-2 rounded-lg">
-              <CreditCard className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Controle de Repasse</h2>
-              <p className="text-gray-600">Gestão de repasses por convênio e particulares</p>
+      {/* Header Section - MODIFICADO */}
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-2 rounded-lg">
+            <CreditCard className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Controle de Repasse</h2>
+            
+            {/* NOVO: Seletor de Mês */}
+            <div className="relative mt-1">
+              <button
+                onClick={() => setShowMonthSelector(!showMonthSelector)}
+                className="flex items-center gap-2 px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Calendar className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-700">
+                  {formatSelectedMonth(selectedMonth)}
+                </span>
+                {showMonthSelector ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+
+              {showMonthSelector && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 w-48">
+                  {generateMonthOptions().map(month => (
+                    <button
+                      key={month.value}
+                      onClick={() => {
+                        setSelectedMonth(month.value);
+                        setShowMonthSelector(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors ${
+                        month.value === selectedMonth 
+                          ? 'bg-blue-100 text-blue-700 font-medium' 
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      {month.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -369,6 +464,38 @@ export const RepasseComponent: React.FC = () => {
             </h3>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* NOVO CAMPO: Mês de Referência */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  Mês de Referência
+                </div>
+              </label>
+              <select
+                value={activeTab === 'convenio' ? formDataConvenio.month_reference : formData.month_reference}
+                onChange={(e) => {
+                  if (activeTab === 'convenio') {
+                    setFormDataConvenio(prev => ({ ...prev, month_reference: e.target.value }));
+                  } else {
+                    setFormData(prev => ({ ...prev, month_reference: e.target.value }));
+                  }
+                }}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Selecione o mês de referência</option>
+                {generateMonthOptions().map(month => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Mês ao qual este repasse será contabilizado
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Médico
@@ -590,7 +717,7 @@ export const RepasseComponent: React.FC = () => {
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
-            Repasses {activeTab === 'convenio' ? 'por Convênio' : 'Particulares'}
+            Repasses {activeTab === 'convenio' ? 'por Convênio' : 'Particulares'} de {formatSelectedMonth(selectedMonth)}
           </h3>
         </div>
         
