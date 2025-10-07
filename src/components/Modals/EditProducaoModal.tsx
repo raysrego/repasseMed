@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, CreditCard as Edit2, Stethoscope, Scissors } from 'lucide-react';
+import { X, Save, CreditCard as Edit2, Stethoscope, Scissors, Calendar } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../../types';
 
@@ -25,7 +25,8 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
     nome_paciente: '',
     data_consulta: '',
     valor: '',
-    tipo: 'consulta' as 'consulta' | 'cirurgia'
+    tipo: 'consulta' as 'consulta' | 'cirurgia',
+    month_reference: '' // NOVO CAMPO
   });
 
   useEffect(() => {
@@ -44,11 +45,41 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
           nome_paciente: producao.nome_paciente,
           data_consulta: normalizeDate(producao.data_consulta),
           valor: producao.valor.toString(),
-          tipo: producao.tipo
+          tipo: producao.tipo,
+          month_reference: producao.month_reference || getDefaultMonthReference() // NOVO
         });
       }
     }
   }, [isOpen, producao]);
+
+  // FUNÇÃO NOVA: Gerar mês padrão
+  const getDefaultMonthReference = () => {
+    const today = new Date();
+    return today.toISOString().slice(0, 7); // 'YYYY-MM'
+  };
+
+  // FUNÇÃO NOVA: Gerar opções de meses
+  const generateMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+    
+    // Últimos 6 meses e próximos 3 meses
+    for (let i = -6; i <= 3; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const value = date.toISOString().slice(0, 7);
+      const label = date.toLocaleDateString('pt-BR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      months.push({ 
+        value, 
+        label: label.charAt(0).toUpperCase() + label.slice(1) 
+      });
+    }
+    
+    return months;
+  };
 
   const loadData = async () => {
     try {
@@ -76,7 +107,8 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
         nome_paciente: formData.nome_paciente,
         data_consulta: formData.data_consulta,
         valor: parseFloat(formData.valor),
-        tipo: formData.tipo
+        tipo: formData.tipo,
+        month_reference: formData.month_reference // NOVO CAMPO
       });
 
       if (!result.error) {
@@ -111,6 +143,32 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* NOVO CAMPO: Mês de Referência */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  Mês de Referência
+                </div>
+              </label>
+              <select
+                value={formData.month_reference}
+                onChange={(e) => setFormData(prev => ({ ...prev, month_reference: e.target.value }))}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Selecione o mês de referência</option>
+                {generateMonthOptions().map(month => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Mês ao qual esta produção será contabilizada
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Médico
@@ -155,8 +213,18 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               >
-                <option value="consulta">🩺 Consulta</option>
-                <option value="cirurgia">✂️ Cirurgia</option>
+                <option value="consulta">
+                  <span className="flex items-center gap-2">
+                    <Stethoscope size={14} />
+                    Consulta
+                  </span>
+                </option>
+                <option value="cirurgia">
+                  <span className="flex items-center gap-2">
+                    <Scissors size={14} />
+                    Cirurgia
+                  </span>
+                </option>
               </select>
             </div>
 
@@ -186,7 +254,7 @@ export const EditProducaoModal: React.FC<EditProducaoModalProps> = ({
               />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Valor (R$)
               </label>
