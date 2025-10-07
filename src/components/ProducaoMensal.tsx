@@ -12,7 +12,9 @@ import {
   Scissors,
   Filter,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
+  Users
 } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../types';
@@ -34,6 +36,10 @@ export const ProducaoMensalComponent: React.FC = () => {
   const [dataInicio, setDataInicio] = useState<string>('');
   const [dataFim, setDataFim] = useState<string>('');
   const [selectedTipo, setSelectedTipo] = useState<string>('');
+  
+  // NOVOS ESTADOS: Filtros por paciente e convênio
+  const [filtroPaciente, setFiltroPaciente] = useState<string>('');
+  const [filtroConvenio, setFiltroConvenio] = useState<string>('');
   
   // NOVO ESTADO: Mês de Referência
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
@@ -221,20 +227,38 @@ export const ProducaoMensalComponent: React.FC = () => {
     setActiveView('form');
   };
 
-  // Filtrar produções (agora já vem filtrado por mês, mas mantemos os outros filtros)
+  // MODIFICADO: Filtrar produções incluindo os novos filtros
   const filteredProducoes = producoes.filter(p => {
     const matchesMedico = selectedMedico ? p.medico_id === parseInt(selectedMedico) : true;
     const matchesDataInicio = dataInicio ? p.data_consulta >= dataInicio : true;
     const matchesDataFim = dataFim ? p.data_consulta <= dataFim : true;
     const matchesTipo = selectedTipo ? p.tipo === selectedTipo : true;
+    const matchesPaciente = filtroPaciente ? 
+      p.nome_paciente.toLowerCase().includes(filtroPaciente.toLowerCase()) : true;
+    const matchesConvenio = filtroConvenio ? 
+      p.convenio_id === parseInt(filtroConvenio) : true;
     
-    return matchesMedico && matchesDataInicio && matchesDataFim && matchesTipo;
+    return matchesMedico && matchesDataInicio && matchesDataFim && 
+           matchesTipo && matchesPaciente && matchesConvenio;
   });
 
   // Calcular totais
   const totalPeriodo = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
   const totalMedicoSelecionado = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
   const cincoPorCentoMedico = totalMedicoSelecionado * 0.05;
+
+  // Função para limpar todos os filtros
+  const limparTodosFiltros = () => {
+    setSelectedMedico('');
+    setDataInicio('');
+    setDataFim('');
+    setSelectedTipo('');
+    setFiltroPaciente('');
+    setFiltroConvenio('');
+  };
+
+  // Verificar se há algum filtro ativo
+  const hasActiveFilters = selectedMedico || dataInicio || dataFim || selectedTipo || filtroPaciente || filtroConvenio;
 
   if (activeView === 'report') {
     return (
@@ -340,7 +364,7 @@ export const ProducaoMensalComponent: React.FC = () => {
         </div>
       </div>
 
-      {/* Filtro por médico - MANTIDO */}
+      {/* MODIFICADO: Filtro por médico - ADICIONADOS NOVOS FILTROS */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -366,6 +390,20 @@ export const ProducaoMensalComponent: React.FC = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Convênio</label>
+              <select
+                value={filtroConvenio}
+                onChange={(e) => setFiltroConvenio(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Todos os convênios</option>
+                {convenios.map(convenio => (
+                  <option key={convenio.id} value={convenio.id}>{convenio.nome}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
               <select
                 value={selectedTipo}
@@ -376,6 +414,22 @@ export const ProducaoMensalComponent: React.FC = () => {
                 <option value="consulta">🩺 Consulta</option>
                 <option value="cirurgia">✂️ Cirurgia</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Paciente</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={filtroPaciente}
+                  onChange={(e) => setFiltroPaciente(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-10"
+                  placeholder="Buscar por nome..."
+                />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                  <Search size={16} className="text-gray-400" />
+                </div>
+              </div>
             </div>
 
             <div>
@@ -399,15 +453,10 @@ export const ProducaoMensalComponent: React.FC = () => {
             </div>
           </div>
           
-          {(selectedMedico || dataInicio || dataFim || selectedTipo) && (
+          {hasActiveFilters && (
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  setSelectedMedico('');
-                  setDataInicio('');
-                  setDataFim('');
-                  setSelectedTipo('');
-                }}
+                onClick={limparTodosFiltros}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
               >
                 Limpar Todos os Filtros
@@ -657,7 +706,7 @@ export const ProducaoMensalComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Lista de Produções - MANTIDO (com pequenos ajustes nos textos) */}
+      {/* MODIFICADO: Lista de Produções - Adicionados indicadores dos filtros ativos */}
       {!showForm && (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100">
           <div className="p-6 border-b border-gray-200">
@@ -665,7 +714,9 @@ export const ProducaoMensalComponent: React.FC = () => {
               <h4 className="text-lg font-semibold text-gray-900">
                 Produções de {formatSelectedMonth(selectedMonth)}
                 {selectedMedico && ` - ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
+                {filtroConvenio && ` - ${convenios.find(c => c.id === parseInt(filtroConvenio))?.nome}`}
                 {selectedTipo && ` - ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}`}
+                {filtroPaciente && ` - Paciente: ${filtroPaciente}`}
               </h4>
               <div className="text-sm text-gray-500">
                 {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''} encontrado{filteredProducoes.length !== 1 ? 's' : ''}
@@ -673,7 +724,6 @@ export const ProducaoMensalComponent: React.FC = () => {
             </div>
           </div>
           
-          {/* ... restante da tabela permanece igual ... */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -761,13 +811,15 @@ export const ProducaoMensalComponent: React.FC = () => {
             </table>
           </div>
           
-          {/* Footer com totais - MANTIDO */}
-          {(selectedMedico || dataInicio || dataFim || selectedTipo) && filteredProducoes.length > 0 && (
+          {/* MODIFICADO: Footer com totais - Inclui informações dos filtros */}
+          {hasActiveFilters && filteredProducoes.length > 0 && (
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-t border-gray-200">
               <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-600">
                   Total de {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''}
                   {selectedMedico && ` para ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
+                  {filtroConvenio && ` no ${convenios.find(c => c.id === parseInt(filtroConvenio))?.nome}`}
+                  {filtroPaciente && ` - Paciente: ${filtroPaciente}`}
                 </div>
                 <div className="flex gap-6 items-center">
                   <div className="text-right">
