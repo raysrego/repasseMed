@@ -10,7 +10,9 @@ import {
   BarChart3,
   Stethoscope,
   Scissors,
-  Filter
+  Filter,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../types';
@@ -32,29 +34,30 @@ export const ProducaoMensalComponent: React.FC = () => {
   const [dataInicio, setDataInicio] = useState<string>('');
   const [dataFim, setDataFim] = useState<string>('');
   const [selectedTipo, setSelectedTipo] = useState<string>('');
-  const [formData, setFormData] = useState({
-    medico_id: '',
-    convenio_id: '',
-    nome_paciente: '',
-    data_consulta: '',
-    valor: '',
-    tipo: 'consulta' as 'consulta' | 'cirurgia'
+  
+  // NOVO ESTADO: Mês de Referência
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().slice(0, 7); // 'YYYY-MM'
   });
+  const [showMonthSelector, setShowMonthSelector] = useState(false);
 
+  // Carregar dados quando o mês selecionado mudar
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedMonth]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      // MODIFICADO: Carregar produções filtrando por month_reference
       const [producaoRes, medicosRes, conveniosRes] = await Promise.all([
-        dbHelpers.getProducaoMensal(),
+        dbHelpers.getProducaoMensalByMonth(selectedMonth), // Nova função
         dbHelpers.getMedicos(),
         dbHelpers.getConvenios()
       ]);
 
-      console.log('Dados carregados:', producaoRes.data); // DEBUG
+      console.log(`Dados carregados para ${selectedMonth}:`, producaoRes.data);
 
       if (producaoRes.data) setProducoes(producaoRes.data);
       if (medicosRes.data) setMedicos(medicosRes.data);
@@ -65,15 +68,45 @@ export const ProducaoMensalComponent: React.FC = () => {
     setLoading(false);
   };
 
-  // Função SIMPLES para formatar data - versão original que funciona
+  // Função para gerar opções de meses
+  const generateMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+    
+    // Últimos 6 meses e próximos 3 meses
+    for (let i = -6; i <= 3; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const value = date.toISOString().slice(0, 7);
+      const label = date.toLocaleDateString('pt-BR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      months.push({ 
+        value, 
+        label: label.charAt(0).toUpperCase() + label.slice(1) 
+      });
+    }
+    
+    return months;
+  };
+
+  // Função para formatar o mês selecionado para exibição
+  const formatSelectedMonth = (month: string) => {
+    const [year, monthNum] = month.split('-');
+    const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+    return date.toLocaleDateString('pt-BR', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  // Restante das funções permanecem iguais...
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     
     try {
-      // Remove qualquer informação de hora se existir
       const dateOnly = dateString.split('T')[0];
-      
-      // Formato simples: se tem hífen, assume YYYY-MM-DD
       if (dateOnly.includes('-')) {
         const parts = dateOnly.split('-');
         if (parts.length === 3) {
@@ -81,8 +114,6 @@ export const ProducaoMensalComponent: React.FC = () => {
           return `${day}/${month}/${year}`;
         }
       }
-      
-      // Se não conseguir processar, retorna a string original
       return dateString;
     } catch (error) {
       console.error('Erro ao formatar data:', error);
@@ -93,7 +124,6 @@ export const ProducaoMensalComponent: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validações básicas
     if (!formData.medico_id) {
       alert('Por favor, selecione um médico');
       return;
@@ -107,13 +137,15 @@ export const ProducaoMensalComponent: React.FC = () => {
     setLoading(true);
 
     try {
+      // MODIFICADO: Incluir month_reference no objeto de criação
       const result = await dbHelpers.createProducaoMensal({
         medico_id: parseInt(formData.medico_id),
         convenio_id: parseInt(formData.convenio_id),
         nome_paciente: formData.nome_paciente,
         data_consulta: formData.data_consulta,
         valor: parseFloat(formData.valor),
-        tipo: formData.tipo
+        tipo: formData.tipo,
+        month_reference: formData.month_reference // Novo campo
       });
 
       if (result.error) {
@@ -126,7 +158,8 @@ export const ProducaoMensalComponent: React.FC = () => {
           nome_paciente: '',
           data_consulta: '',
           valor: '',
-          tipo: 'consulta'
+          tipo: 'consulta',
+          month_reference: selectedMonth // Reset para o mês atual
         });
         setShowForm(false);
         loadData();
@@ -139,6 +172,26 @@ export const ProducaoMensalComponent: React.FC = () => {
     setLoading(false);
   };
 
+  // Estado do formulário atualizado com month_reference
+  const [formData, setFormData] = useState({
+    medico_id: '',
+    convenio_id: '',
+    nome_paciente: '',
+    data_consulta: '',
+    valor: '',
+    tipo: 'consulta' as 'consulta' | 'cirurgia',
+    month_reference: selectedMonth // Inicializar com o mês selecionado
+  });
+
+  // Atualizar formData quando selectedMonth mudar
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      month_reference: selectedMonth
+    }));
+  }, [selectedMonth]);
+
+  // Restante das funções permanecem iguais...
   const handleEdit = (producao: ProducaoMensal) => {
     setEditingProducao(producao);
   };
@@ -168,7 +221,7 @@ export const ProducaoMensalComponent: React.FC = () => {
     setActiveView('form');
   };
 
-  // Filtrar produções por médico selecionado
+  // Filtrar produções (agora já vem filtrado por mês, mas mantemos os outros filtros)
   const filteredProducoes = producoes.filter(p => {
     const matchesMedico = selectedMedico ? p.medico_id === parseInt(selectedMedico) : true;
     const matchesDataInicio = dataInicio ? p.data_consulta >= dataInicio : true;
@@ -179,7 +232,7 @@ export const ProducaoMensalComponent: React.FC = () => {
   });
 
   // Calcular totais
-  const totalPeriodo = producoes.reduce((sum, item) => sum + item.valor, 0);
+  const totalPeriodo = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
   const totalMedicoSelecionado = filteredProducoes.reduce((sum, item) => sum + item.valor, 0);
   const cincoPorCentoMedico = totalMedicoSelecionado * 0.05;
 
@@ -199,6 +252,7 @@ export const ProducaoMensalComponent: React.FC = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onNew={handleNew}
+          selectedMonth={selectedMonth} // Passar o mês selecionado
         />
 
         <EditProducaoModal
@@ -222,17 +276,49 @@ export const ProducaoMensalComponent: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="flex justify-between items-center">
+      {/* Header Section - MODIFICADO */}
+      <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-r from-green-500 to-green-600 p-2 rounded-lg">
             <TrendingUp className="h-6 w-6 text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Produção Mensal</h2>
-            <p className="text-gray-600">
-              Controle de consultas e produção médica
-            </p>
+            
+            {/* NOVO: Seletor de Mês */}
+            <div className="relative mt-1">
+              <button
+                onClick={() => setShowMonthSelector(!showMonthSelector)}
+                className="flex items-center gap-2 px-3 py-1 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Calendar className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-700">
+                  {formatSelectedMonth(selectedMonth)}
+                </span>
+                {showMonthSelector ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+
+              {showMonthSelector && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 w-48">
+                  {generateMonthOptions().map(month => (
+                    <button
+                      key={month.value}
+                      onClick={() => {
+                        setSelectedMonth(month.value);
+                        setShowMonthSelector(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors ${
+                        month.value === selectedMonth 
+                          ? 'bg-blue-100 text-blue-700 font-medium' 
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      {month.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -254,7 +340,7 @@ export const ProducaoMensalComponent: React.FC = () => {
         </div>
       </div>
 
-      {/* Filtro por médico */}
+      {/* Filtro por médico - MANTIDO */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -331,16 +417,19 @@ export const ProducaoMensalComponent: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - MANTIDO */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm font-medium">
-                {selectedMedico ? 'Total do Médico' : 'Total Geral'}
+                {selectedMedico ? 'Total do Médico' : 'Total do Mês'}
               </p>
               <p className="text-2xl font-bold">
                 R$ {selectedMedico ? totalMedicoSelecionado.toFixed(2) : totalPeriodo.toFixed(2)}
+              </p>
+              <p className="text-green-200 text-xs mt-1">
+                {formatSelectedMonth(selectedMonth)}
               </p>
             </div>
             <div className="bg-white/20 p-3 rounded-lg">
@@ -354,6 +443,9 @@ export const ProducaoMensalComponent: React.FC = () => {
             <div>
               <p className="text-blue-100 text-sm font-medium">Total de Consultas</p>
               <p className="text-2xl font-bold">{filteredProducoes.length}</p>
+              <p className="text-blue-200 text-xs mt-1">
+                {formatSelectedMonth(selectedMonth)}
+              </p>
             </div>
             <div className="bg-white/20 p-3 rounded-lg">
               <FileText className="h-6 w-6" />
@@ -367,6 +459,9 @@ export const ProducaoMensalComponent: React.FC = () => {
               <div>
                 <p className="text-purple-100 text-sm font-medium">5% do Total</p>
                 <p className="text-2xl font-bold">R$ {cincoPorCentoMedico.toFixed(2)}</p>
+                <p className="text-purple-200 text-xs mt-1">
+                  {formatSelectedMonth(selectedMonth)}
+                </p>
               </div>
               <div className="bg-white/20 p-3 rounded-lg">
                 <TrendingUp className="h-6 w-6" />
@@ -380,7 +475,10 @@ export const ProducaoMensalComponent: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-sm font-medium">Média por Consulta</p>
-                <p className="text-2xl font-bold">R$ {producoes.length > 0 ? (totalPeriodo / producoes.length).toFixed(2) : '0.00'}</p>
+                <p className="text-2xl font-bold">R$ {filteredProducoes.length > 0 ? (totalPeriodo / filteredProducoes.length).toFixed(2) : '0.00'}</p>
+                <p className="text-purple-200 text-xs mt-1">
+                  {formatSelectedMonth(selectedMonth)}
+                </p>
               </div>
               <div className="bg-white/20 p-3 rounded-lg">
                 <TrendingUp className="h-6 w-6" />
@@ -390,7 +488,7 @@ export const ProducaoMensalComponent: React.FC = () => {
         )}
       </div>
 
-      {/* Formulário de Nova Consulta */}
+      {/* Formulário de Nova Consulta - MODIFICADO */}
       {showForm && (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
           <div className="flex items-center gap-2 mb-6">
@@ -401,6 +499,27 @@ export const ProducaoMensalComponent: React.FC = () => {
             onSubmit={handleSubmit}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
+            {/* NOVO CAMPO: Mês de Referência */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mês de Referência *
+              </label>
+              <select
+                value={formData.month_reference}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, month_reference: e.target.value }))
+                }
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                required
+              >
+                {generateMonthOptions().map(month => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Médico *
@@ -538,16 +657,15 @@ export const ProducaoMensalComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Lista de Produções Recentes */}
+      {/* Lista de Produções - MANTIDO (com pequenos ajustes nos textos) */}
       {!showForm && (
         <div className="bg-white rounded-xl shadow-lg border border-gray-100">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-semibold text-gray-900">
-                Produções
+                Produções de {formatSelectedMonth(selectedMonth)}
                 {selectedMedico && ` - ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
                 {selectedTipo && ` - ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}`}
-                {(dataInicio || dataFim) && ` - Período: ${dataInicio ? formatDate(dataInicio) : 'Início'} até ${dataFim ? formatDate(dataFim) : 'Fim'}`}
               </h4>
               <div className="text-sm text-gray-500">
                 {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''} encontrado{filteredProducoes.length !== 1 ? 's' : ''}
@@ -555,6 +673,7 @@ export const ProducaoMensalComponent: React.FC = () => {
             </div>
           </div>
           
+          {/* ... restante da tabela permanece igual ... */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -577,12 +696,12 @@ export const ProducaoMensalComponent: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ) : producoes.length === 0 ? (
+                ) : filteredProducoes.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       <div className="flex flex-col items-center gap-3">
                         <FileText className="h-12 w-12 text-gray-300" />
-                        <span className="text-lg font-medium">Nenhuma produção cadastrada</span>
+                        <span className="text-lg font-medium">Nenhuma produção para {formatSelectedMonth(selectedMonth)}</span>
                         <span className="text-sm">Clique em "Nova Consulta" para começar</span>
                       </div>
                     </td>
@@ -642,7 +761,7 @@ export const ProducaoMensalComponent: React.FC = () => {
             </table>
           </div>
           
-          {/* Footer com totais quando médico selecionado */}
+          {/* Footer com totais - MANTIDO */}
           {(selectedMedico || dataInicio || dataFim || selectedTipo) && filteredProducoes.length > 0 && (
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-t border-gray-200">
               <div className="flex justify-between items-center">
