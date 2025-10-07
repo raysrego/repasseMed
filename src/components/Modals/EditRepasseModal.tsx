@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, CreditCard, Stethoscope, Scissors } from 'lucide-react';
+import { X, Save, CreditCard, Stethoscope, Scissors, Calendar } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { Repasse, Medico, Convenio, Hospital } from '../../types';
 
@@ -28,7 +28,8 @@ export const EditRepasseModal: React.FC<EditRepasseModalProps> = ({
     data_cirurgia: '',
     valor: '',
     tipo: 'consulta' as 'consulta' | 'cirurgia',
-    is_particular: false
+    is_particular: false,
+    month_reference: '' // NOVO CAMPO
   });
 
   useEffect(() => {
@@ -43,11 +44,41 @@ export const EditRepasseModal: React.FC<EditRepasseModalProps> = ({
           data_cirurgia: repasse.data_cirurgia,
           valor: repasse.valor.toString(),
           tipo: repasse.tipo,
-          is_particular: repasse.is_particular
+          is_particular: repasse.is_particular,
+          month_reference: repasse.month_reference || getDefaultMonthReference() // NOVO
         });
       }
     }
   }, [isOpen, repasse]);
+
+  // FUNÇÃO NOVA: Gerar mês padrão
+  const getDefaultMonthReference = () => {
+    const today = new Date();
+    return today.toISOString().slice(0, 7); // 'YYYY-MM'
+  };
+
+  // FUNÇÃO NOVA: Gerar opções de meses
+  const generateMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+    
+    // Últimos 6 meses e próximos 3 meses
+    for (let i = -6; i <= 3; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const value = date.toISOString().slice(0, 7);
+      const label = date.toLocaleDateString('pt-BR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      months.push({ 
+        value, 
+        label: label.charAt(0).toUpperCase() + label.slice(1) 
+      });
+    }
+    
+    return months;
+  };
 
   const loadData = async () => {
     try {
@@ -79,7 +110,8 @@ export const EditRepasseModal: React.FC<EditRepasseModalProps> = ({
         data_cirurgia: formData.data_cirurgia,
         valor: parseFloat(formData.valor),
         tipo: formData.tipo,
-        is_particular: formData.is_particular
+        is_particular: formData.is_particular,
+        month_reference: formData.month_reference // NOVO CAMPO
       });
 
       if (!result.error) {
@@ -114,6 +146,32 @@ export const EditRepasseModal: React.FC<EditRepasseModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* NOVO CAMPO: Mês de Referência */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  Mês de Referência
+                </div>
+              </label>
+              <select
+                value={formData.month_reference}
+                onChange={(e) => setFormData(prev => ({ ...prev, month_reference: e.target.value }))}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Selecione o mês de referência</option>
+                {generateMonthOptions().map(month => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Mês ao qual este repasse será contabilizado
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Médico
@@ -241,7 +299,7 @@ export const EditRepasseModal: React.FC<EditRepasseModalProps> = ({
               />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Valor (R$)
               </label>
