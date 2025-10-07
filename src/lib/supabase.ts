@@ -122,6 +122,20 @@ export const dbHelpers = {
     return { data, error };
   },
 
+  // NOVA FUNÇÃO: Produção Mensal por Mês
+  async getProducaoMensalByMonth(month: string) {
+    const { data, error } = await supabase
+      .from('producao_mensal')
+      .select(`
+        *,
+        medico:medicos(*),
+        convenio:convenios(*)
+      `)
+      .eq('month_reference', month)
+      .order('data_consulta', { ascending: false });
+    return { data, error };
+  },
+
   async getProducaoMensalByMedico(medicoId: number) {
     const { data, error } = await supabase
       .from('producao_mensal')
@@ -134,6 +148,7 @@ export const dbHelpers = {
       .order('data_consulta', { ascending: false });
     return { data, error };
   },
+
   async createProducaoMensal(producao: Omit<any, 'id' | 'created_at'>) {
     const { data, error } = await supabase
       .from('producao_mensal')
@@ -158,6 +173,7 @@ export const dbHelpers = {
       .eq('id', id);
     return { data, error };
   },
+
   // Repasses
   async getRepasses() {
     const { data, error } = await supabase
@@ -168,6 +184,21 @@ export const dbHelpers = {
         convenio:convenios(*),
         hospital:hospitais(*)
       `)
+      .order('data_cirurgia', { ascending: false });
+    return { data, error };
+  },
+
+  // NOVA FUNÇÃO: Repasses por Mês
+  async getRepassesByMonth(month: string) {
+    const { data, error } = await supabase
+      .from('repasses')
+      .select(`
+        *,
+        medico:medicos(*),
+        convenio:convenios(*),
+        hospital:hospitais(*)
+      `)
+      .eq('month_reference', month)
       .order('data_cirurgia', { ascending: false });
     return { data, error };
   },
@@ -185,6 +216,7 @@ export const dbHelpers = {
       .order('data_cirurgia', { ascending: false });
     return { data, error };
   },
+
   async createRepasse(repasse: Omit<any, 'id' | 'created_at'>) {
     // Limpar campos undefined ou null para evitar erro 400
     const cleanRepasse = Object.fromEntries(
