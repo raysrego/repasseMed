@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, User, Calendar, DollarSign, Building, Pencil, Trash2, Plus, Filter, Printer, TrendingUp, Stethoscope, Scissors } from 'lucide-react';
+import { FileText, User, Calendar, DollarSign, Building, Pencil, Trash2, Plus, Filter, Printer, TrendingUp, Stethoscope, Scissors, ChevronDown, ChevronUp } from 'lucide-react';
 import { dbHelpers } from '../../lib/supabase';
 import { ProducaoMensal, Medico, Convenio } from '../../types';
 import { supabase } from '../../lib/supabase';
@@ -8,9 +8,15 @@ interface ProducaoReportProps {
   onEdit: (producao: ProducaoMensal) => void;
   onDelete: (id: number) => void;
   onNew: () => void;
+  selectedMonth?: string; // NOVA PROP: Mês selecionado do componente principal
 }
 
-export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete, onNew }) => {
+export const ProducaoReport: React.FC<ProducaoReportProps> = ({ 
+  onEdit, 
+  onDelete, 
+  onNew, 
+  selectedMonth 
+}) => {
   const [producoes, setProducoes] = useState<ProducaoMensal[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
@@ -19,20 +25,72 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
   const [dataInicio, setDataInicio] = useState<string>('');
   const [dataFim, setDataFim] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  
+  // NOVO ESTADO: Mês de Produção para o relatório
+  const [mesProducao, setMesProducao] = useState<string>(selectedMonth || '');
+  const [showMonthSelector, setShowMonthSelector] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
 
+  // Atualizar mesProducao quando selectedMonth mudar
+  useEffect(() => {
+    if (selectedMonth) {
+      setMesProducao(selectedMonth);
+    }
+  }, [selectedMonth]);
+
   useEffect(() => {
     filterData();
-  }, [selectedMedico, selectedTipo, dataInicio, dataFim]);
+  }, [selectedMedico, selectedTipo, dataInicio, dataFim, mesProducao]); // ADICIONADO mesProducao
+
+  // FUNÇÃO NOVA: Gerar opções de meses
+  const generateMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+    
+    // Últimos 12 meses e próximos 3 meses
+    for (let i = -12; i <= 3; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const value = date.toISOString().slice(0, 7);
+      const label = date.toLocaleDateString('pt-BR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      months.push({ 
+        value, 
+        label: label.charAt(0).toUpperCase() + label.slice(1) 
+      });
+    }
+    
+    return months;
+  };
+
+  // FUNÇÃO NOVA: Formatar mês para exibição
+  const formatSelectedMonth = (month: string) => {
+    if (!month) return 'Todos os meses';
+    const [year, monthNum] = month.split('-');
+    const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+    return date.toLocaleDateString('pt-BR', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [producaoRes, medicosRes, conveniosRes] = await Promise.all([
-        dbHelpers.getProducaoMensal(),
+      // MODIFICADO: Carregar todos os dados ou filtrar por mês se especificado
+      let producaoRes;
+      if (mesProducao) {
+        producaoRes = await dbHelpers.getProducaoMensalByMonth(mesProducao);
+      } else {
+        producaoRes = await dbHelpers.getProducaoMensal();
+      }
+
+      const [medicosRes, conveniosRes] = await Promise.all([
         dbHelpers.getMedicos(),
         dbHelpers.getConvenios()
       ]);
@@ -47,11 +105,6 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
   };
 
   const filterData = async () => {
-    if (!selectedMedico && !selectedTipo && !dataInicio && !dataFim) {
-      loadData();
-      return;
-    }
-
     setLoading(true);
     try {
       let query = supabase
@@ -61,6 +114,11 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
           medico:medicos(*),
           convenio:convenios(*)
         `);
+
+      // NOVO: Filtro por mês de produção
+      if (mesProducao) {
+        query = query.eq('month_reference', mesProducao);
+      }
 
       if (selectedMedico) {
         query = query.eq('medico_id', parseInt(selectedMedico));
@@ -124,6 +182,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
               <div class="header">
                 <h1>Relatório de Produção Mensal</h1>
                 <p>Data: ${new Date().toLocaleDateString('pt-BR')}</p>
+                ${mesProducao ? `<p>Mês de Produção: ${formatSelectedMonth(mesProducao)}</p>` : ''}
                 ${selectedMedico ? `<p>Médico: ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}</p>` : ''}
                 ${selectedTipo ? `<p>Tipo: ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}</p>` : ''}
                 ${dataInicio || dataFim ? `<p>Período: ${dataInicio ? formatDate(dataInicio) : 'Início'} até ${dataFim ? formatDate(dataFim) : 'Fim'}</p>` : ''}
@@ -143,6 +202,18 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
     }
   };
 
+  // Função para limpar todos os filtros
+  const limparFiltros = () => {
+    setSelectedMedico('');
+    setSelectedTipo('');
+    setDataInicio('');
+    setDataFim('');
+    setMesProducao(selectedMonth || ''); // Volta para o mês padrão ou vazio
+  };
+
+  // Verificar se há filtros ativos
+  const hasActiveFilters = selectedMedico || selectedTipo || dataInicio || dataFim || (mesProducao && mesProducao !== selectedMonth);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -155,6 +226,11 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
             <div>
               <h3 className="text-2xl font-bold">Relatório de Produção Mensal</h3>
               <p className="text-blue-100">Visualize e gerencie a produção médica</p>
+              {mesProducao && (
+                <p className="text-blue-200 text-sm mt-1">
+                  Mês de referência: {formatSelectedMonth(mesProducao)}
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -174,6 +250,11 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
             <div>
               <p className="text-green-100 text-sm font-medium">Total Arrecadado</p>
               <p className="text-2xl font-bold">R$ {totalGeral.toFixed(2)}</p>
+              {mesProducao && (
+                <p className="text-green-200 text-xs mt-1">
+                  {formatSelectedMonth(mesProducao)}
+                </p>
+              )}
             </div>
             <div className="bg-white/20 p-3 rounded-lg">
               <DollarSign className="h-6 w-6" />
@@ -186,6 +267,11 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
             <div>
               <p className="text-blue-100 text-sm font-medium">Total de Consultas</p>
               <p className="text-2xl font-bold">{filteredProducoes.length}</p>
+              {mesProducao && (
+                <p className="text-blue-200 text-xs mt-1">
+                  {formatSelectedMonth(mesProducao)}
+                </p>
+              )}
             </div>
             <div className="bg-white/20 p-3 rounded-lg">
               <FileText className="h-6 w-6" />
@@ -198,6 +284,11 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
             <div>
               <p className="text-purple-100 text-sm font-medium">5% do Total</p>
               <p className="text-2xl font-bold">R$ {cincoPorCentoTotal.toFixed(2)}</p>
+              {mesProducao && (
+                <p className="text-purple-200 text-xs mt-1">
+                  {formatSelectedMonth(mesProducao)}
+                </p>
+              )}
             </div>
             <div className="bg-white/20 p-3 rounded-lg">
               <TrendingUp className="h-6 w-6" />
@@ -206,18 +297,80 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - MODIFICADO: Adicionado filtro por Mês de Produção */}
       <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="bg-gray-100 p-2 rounded-lg">
-              <Filter className="h-5 w-5 text-gray-600" />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="bg-gray-100 p-2 rounded-lg">
+                <Filter className="h-5 w-5 text-gray-600" />
+              </div>
+              <span className="font-semibold text-gray-800">Filtros:</span>
             </div>
-            <span className="font-semibold text-gray-800">Filtros:</span>
+            
+            {hasActiveFilters && (
+              <button
+                onClick={limparFiltros}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200 text-sm"
+              >
+                Limpar Filtros
+              </button>
+            )}
           </div>
-          <div className="flex gap-4 flex-1 flex-wrap">
-            <div className="max-w-xs">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Médico</label>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* NOVO: Filtro por Mês de Produção */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Mês de Produção</label>
+              <div className="relative">
+                <button
+                  onClick={() => setShowMonthSelector(!showMonthSelector)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between bg-white"
+                >
+                  <span className={mesProducao ? "text-gray-900" : "text-gray-500"}>
+                    {formatSelectedMonth(mesProducao)}
+                  </span>
+                  {showMonthSelector ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+
+                {showMonthSelector && (
+                  <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-20 w-full max-h-60 overflow-y-auto">
+                    <button
+                      onClick={() => {
+                        setMesProducao('');
+                        setShowMonthSelector(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors ${
+                        !mesProducao 
+                          ? 'bg-blue-100 text-blue-700 font-medium' 
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      Todos os meses
+                    </button>
+                    {generateMonthOptions().map(month => (
+                      <button
+                        key={month.value}
+                        onClick={() => {
+                          setMesProducao(month.value);
+                          setShowMonthSelector(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors ${
+                          month.value === mesProducao 
+                            ? 'bg-blue-100 text-blue-700 font-medium' 
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {month.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Médico</label>
               <select
                 value={selectedMedico}
                 onChange={(e) => setSelectedMedico(e.target.value)}
@@ -229,8 +382,9 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                 ))}
               </select>
             </div>
-            <div className="max-w-xs">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
               <select
                 value={selectedTipo}
                 onChange={(e) => setSelectedTipo(e.target.value)}
@@ -241,36 +395,38 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
                 <option value="cirurgia">✂️ Cirurgia</option>
               </select>
             </div>
+
             <div className="flex gap-2 items-end">
-              <div>
+              <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
-              <input
-                type="date"
-                value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
-                className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Data início"
-              />
+                <input
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
-              <div>
+              <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-              <input
-                type="date"
-                value={dataFim}
-                onChange={(e) => setDataFim(e.target.value)}
-                className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Data fim"
-              />
+                <input
+                  type="date"
+                  value={dataFim}
+                  onChange={(e) => setDataFim(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
             </div>
           </div>
-          <button
-            onClick={handlePrint}
-            className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
-          >
-            <Printer size={20} />
-            Imprimir
-          </button>
+
+          <div className="flex justify-end">
+            <button
+              onClick={handlePrint}
+              className="bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
+            >
+              <Printer size={20} />
+              Imprimir Relatório
+            </button>
+          </div>
         </div>
       </div>
 
@@ -278,7 +434,12 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
       <div className="bg-white rounded-xl shadow-lg border border-gray-100" id="relatorio-producao">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h4 className="text-xl font-bold text-gray-900">Registros de Produção</h4>
+            <h4 className="text-xl font-bold text-gray-900">
+              Registros de Produção
+              {mesProducao && ` - ${formatSelectedMonth(mesProducao)}`}
+              {selectedMedico && ` - ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
+              {selectedTipo && ` - ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}`}
+            </h4>
             <div className="text-sm text-gray-500">
               {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''} encontrado{filteredProducoes.length !== 1 ? 's' : ''}
             </div>
@@ -301,7 +462,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center">
+                  <td colSpan={7} className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="text-gray-500">Carregando dados...</span>
@@ -406,6 +567,7 @@ export const ProducaoReport: React.FC<ProducaoReportProps> = ({ onEdit, onDelete
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 Exibindo {filteredProducoes.length} registro{filteredProducoes.length !== 1 ? 's' : ''}
+                {mesProducao && ` de ${formatSelectedMonth(mesProducao)}`}
                 {selectedMedico && ` para ${medicos.find(m => m.id === parseInt(selectedMedico))?.nome}`}
                 {selectedTipo && ` - ${selectedTipo === 'consulta' ? 'Consultas' : 'Cirurgias'}`}
               </div>
