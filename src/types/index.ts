@@ -50,6 +50,7 @@ export interface Repasse {
   forma_pagamento?: 'credito' | 'pix' | 'debito' | 'especie';
   valor_unitario?: number;
   month_reference?: string;
+  observacao?: string;
   created_at?: string;
   medico?: Medico;
   convenio?: Convenio;

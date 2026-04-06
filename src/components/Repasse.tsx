@@ -33,7 +33,8 @@ export const RepasseComponent: React.FC = () => {
     data_cirurgia: '',
     tipo_procedimento_detalhado: 'consulta' as 'consulta' | 'infiltracao' | 'onda_choque' | 'cirurgia_particular' | 'medico_parceiro',
     valor: '',
-    month_reference: ''
+    month_reference: '',
+    observacao: ''
   });
 
   const [formDataConvenio, setFormDataConvenio] = useState({
@@ -167,7 +168,8 @@ export const RepasseComponent: React.FC = () => {
           tipo_procedimento_detalhado: formData.tipo_procedimento_detalhado,
           porcentagem_repasse: porcentagem,
           valor_repasse_medico: valorRepasse,
-          month_reference: formData.month_reference
+          month_reference: formData.month_reference,
+          observacao: formData.observacao
         });
       }
 
@@ -191,7 +193,8 @@ export const RepasseComponent: React.FC = () => {
           data_cirurgia: '',
           tipo_procedimento_detalhado: 'consulta',
           valor: '',
-          month_reference: selectedMonth
+          month_reference: selectedMonth,
+          observacao: ''
         });
 
         setShowForm(false);
@@ -607,24 +610,39 @@ export const RepasseComponent: React.FC = () => {
                 </div>
               </>
             ) : (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor Total
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.valor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  required
-                />
-                {formData.valor && (
-                  <p className="text-xs text-green-600 mt-1">
-                    Repasse: R$ {calcularValoresRepasse(formData.tipo_procedimento_detalhado, parseFloat(formData.valor || '0')).valorRepasse.toFixed(2)}
-                  </p>
-                )}
-              </div>
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Valor Total
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.valor}
+                    onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    required
+                  />
+                  {formData.valor && (
+                    <p className="text-xs text-green-600 mt-1">
+                      Repasse: R$ {calcularValoresRepasse(formData.tipo_procedimento_detalhado, parseFloat(formData.valor || '0')).valorRepasse.toFixed(2)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Observação (Opcional)
+                  </label>
+                  <textarea
+                    value={formData.observacao}
+                    onChange={(e) => setFormData(prev => ({ ...prev, observacao: e.target.value }))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    rows={3}
+                    placeholder="Adicione observações sobre este repasse..."
+                  />
+                </div>
+              </>
             )}
 
             <div className="md:col-span-2 flex gap-3 pt-4">

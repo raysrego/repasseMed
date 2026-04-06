@@ -44,6 +44,14 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({
   const [expandedMedicos, setExpandedMedicos] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    if (selectedMedico && activeTab === 'particular') {
+      setExpandedMedicos(new Set([parseInt(selectedMedico)]));
+    } else if (!selectedMedico) {
+      setExpandedMedicos(new Set());
+    }
+  }, [selectedMedico, activeTab]);
+
+  useEffect(() => {
     loadData();
   }, [selectedMonth]);
 
@@ -274,14 +282,14 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({
       {activeTab === 'particular' ? (
         <div className="space-y-4">
           {medicosSummary.map(summary => (
-            <div key={summary.medico.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div key={summary.medico.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden print:break-inside-avoid print:shadow-none">
               <div
-                className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200 cursor-pointer hover:from-green-100 hover:to-emerald-100 transition-colors"
+                className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200 cursor-pointer hover:from-green-100 hover:to-emerald-100 transition-colors print:cursor-default print:bg-gray-100"
                 onClick={() => toggleMedico(summary.medico.id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="bg-green-100 p-3 rounded-lg">
+                    <div className="bg-green-100 p-3 rounded-lg print:hidden">
                       <User className="h-6 w-6 text-green-600" />
                     </div>
                     <div>
@@ -300,7 +308,7 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({
                       <p className="text-sm text-gray-600">Total Repasse</p>
                       <p className="text-xl font-bold text-green-600">R$ {summary.totalRepasses.toFixed(2)}</p>
                     </div>
-                    <div className="bg-white p-2 rounded-lg">
+                    <div className="bg-white p-2 rounded-lg print:hidden">
                       {expandedMedicos.has(summary.medico.id) ? (
                         <ChevronUp className="h-5 w-5 text-gray-600" />
                       ) : (
@@ -311,26 +319,26 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({
                 </div>
               </div>
 
-              {expandedMedicos.has(summary.medico.id) && (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {(expandedMedicos.has(summary.medico.id) || selectedMedico) && (
+                <div className="p-6 print:p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 print:grid-cols-3 print:gap-2 print:mb-4">
                     {Object.entries(summary.procedimentos).map(([tipo, data]) => (
-                      <div key={tipo} className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-start justify-between mb-3">
+                      <div key={tipo} className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200 print:p-2 print:bg-gray-50">
+                        <div className="flex items-start justify-between mb-3 print:mb-1">
                           <div>
-                            <p className="font-semibold text-gray-900">{getTipoProcedimentoLabel(tipo)}</p>
-                            <p className="text-sm text-gray-600">{getPorcentagemLabel(tipo)}</p>
+                            <p className="font-semibold text-gray-900 text-sm">{getTipoProcedimentoLabel(tipo)}</p>
+                            <p className="text-xs text-gray-600">{getPorcentagemLabel(tipo)}</p>
                           </div>
                           <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
                             {data.count}x
                           </span>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Entrada:</span>
                             <span className="font-medium text-gray-900">R$ {data.totalValor.toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">Repasse:</span>
                             <span className="font-bold text-green-600">R$ {data.totalRepasse.toFixed(2)}</span>
                           </div>
@@ -348,6 +356,7 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Data</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Valor</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Repasse</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Observação</th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 print:hidden">Ações</th>
                         </tr>
                       </thead>
@@ -371,6 +380,9 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({
                                 R$ {(repasse.valor_repasse_medico || 0).toFixed(2)}
                               </span>
                             </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                              {repasse.observacao || '-'}
+                            </td>
                             <td className="px-4 py-3 print:hidden">
                               <div className="flex items-center gap-2">
                                 <button
@@ -378,7 +390,7 @@ export const RepasseReport: React.FC<RepasseReportProps> = ({
                                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                   title="Editar"
                                 >
-                                  <Edit size={16} />
+                                  <CreditCard size={16} />
                                 </button>
                                 <button
                                   onClick={() => onDelete(repasse.id)}
