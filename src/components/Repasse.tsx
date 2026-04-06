@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, DollarSign, User, Building, Guitar as Hospital, CreditCard, UserCheck, Stethoscope, Scissors, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Plus, DollarSign, User, Building, Guitar as Hospital, CreditCard, UserCheck, Stethoscope, BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import { dbHelpers } from '../lib/supabase';
 import { Repasse, Medico, Convenio, Hospital as HospitalType } from '../types';
 import { RepasseReport } from './Reports/RepasseReport';
@@ -11,7 +11,6 @@ export const RepasseComponent: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'convenio' | 'particular'>('convenio');
   const [activeView, setActiveView] = useState<'form' | 'report'>('form');
-  const [activeParticularForm, setActiveParticularForm] = useState<'consulta_onda' | 'infiltracao_cirurgia'>('consulta_onda');
   const [repasses, setRepasses] = useState<Repasse[]>([]);
   const [medicos, setMedicos] = useState<Medico[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
@@ -21,11 +20,10 @@ export const RepasseComponent: React.FC = () => {
   const [editingRepasse, setEditingRepasse] = useState<Repasse | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  
-  // NOVO ESTADO: Mês de Referência
+
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     const today = new Date();
-    return today.toISOString().slice(0, 7); // 'YYYY-MM'
+    return today.toISOString().slice(0, 7);
   });
   const [showMonthSelector, setShowMonthSelector] = useState(false);
 
@@ -33,11 +31,9 @@ export const RepasseComponent: React.FC = () => {
     medico_id: '',
     nome_paciente: '',
     data_cirurgia: '',
-    tipo_procedimento: 'consulta' as 'consulta' | 'onda_choque' | 'infiltracao' | 'cirurgia',
-    quantidade: '1',
-    forma_pagamento: 'pix' as 'credito' | 'pix' | 'debito' | 'especie',
-    valor_unitario: '',
-    month_reference: '' // NOVO CAMPO
+    tipo_procedimento_detalhado: 'consulta' as 'consulta' | 'infiltracao' | 'onda_choque' | 'cirurgia_particular' | 'medico_parceiro',
+    valor: '',
+    month_reference: ''
   });
 
   const [formDataConvenio, setFormDataConvenio] = useState({
@@ -48,15 +44,13 @@ export const RepasseComponent: React.FC = () => {
     data_cirurgia: '',
     valor: '',
     tipo: 'consulta' as 'consulta' | 'cirurgia',
-    month_reference: '' // NOVO CAMPO
+    month_reference: ''
   });
 
-  // Carregar dados quando o mês selecionado mudar
   useEffect(() => {
     loadData();
   }, [selectedMonth]);
 
-  // Atualizar formData quando selectedMonth mudar
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
@@ -71,9 +65,8 @@ export const RepasseComponent: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // MODIFICADO: Carregar repasses filtrando por month_reference
       const [repassesRes, medicosRes, conveniosRes, hospitaisRes] = await Promise.all([
-        dbHelpers.getRepassesByMonth(selectedMonth), // Nova função
+        dbHelpers.getRepassesByMonth(selectedMonth),
         dbHelpers.getMedicos(),
         dbHelpers.getConvenios(),
         dbHelpers.getHospitais()
@@ -89,37 +82,50 @@ export const RepasseComponent: React.FC = () => {
     setLoading(false);
   };
 
-  // FUNÇÃO NOVA: Gerar opções de meses
   const generateMonthOptions = () => {
     const months = [];
     const today = new Date();
-    
-    // Últimos 6 meses e próximos 3 meses
+
     for (let i = -6; i <= 3; i++) {
       const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
       const value = date.toISOString().slice(0, 7);
-      const label = date.toLocaleDateString('pt-BR', { 
-        month: 'long', 
-        year: 'numeric' 
+      const label = date.toLocaleDateString('pt-BR', {
+        month: 'long',
+        year: 'numeric'
       });
-      
-      months.push({ 
-        value, 
-        label: label.charAt(0).toUpperCase() + label.slice(1) 
+
+      months.push({
+        value,
+        label: label.charAt(0).toUpperCase() + label.slice(1)
       });
     }
-    
+
     return months;
   };
 
-  // FUNÇÃO NOVA: Formatar mês selecionado
   const formatSelectedMonth = (month: string) => {
     const [year, monthNum] = month.split('-');
     const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
-    return date.toLocaleDateString('pt-BR', { 
-      month: 'long', 
-      year: 'numeric' 
+    const label = date.toLocaleDateString('pt-BR', {
+      month: 'long',
+      year: 'numeric'
     });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  };
+
+  const calcularValoresRepasse = (tipoProcedimento: string, valor: number) => {
+    const porcentagens: { [key: string]: number } = {
+      'consulta': 16.33,
+      'infiltracao': 40.00,
+      'onda_choque': 30.00,
+      'cirurgia_particular': 2.00,
+      'medico_parceiro': 50.00
+    };
+
+    const porcentagem = porcentagens[tipoProcedimento] || 0;
+    const valorRepasse = (valor * porcentagem) / 100;
+
+    return { porcentagem, valorRepasse };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,7 +134,7 @@ export const RepasseComponent: React.FC = () => {
 
     try {
       let result;
-      
+
       if (activeTab === 'convenio') {
         result = await dbHelpers.createRepasse({
           medico_id: parseInt(formDataConvenio.medico_id),
@@ -139,36 +145,35 @@ export const RepasseComponent: React.FC = () => {
           valor: parseFloat(formDataConvenio.valor),
           tipo: formDataConvenio.tipo,
           is_particular: false,
-          month_reference: formDataConvenio.month_reference // NOVO CAMPO
+          month_reference: formDataConvenio.month_reference
         });
       } else {
-        // Para particulares, calcular valor total
-        const valorTotal = parseFloat(formData.valor_unitario) * parseInt(formData.quantidade);
-        const categoria = activeParticularForm === 'consulta_onda' ? 'consulta_onda' : 'infiltracao_cirurgia';
-        const tipo = ['consulta', 'onda_choque'].includes(formData.tipo_procedimento) ? 'consulta' : 'cirurgia';
-        
-        // Garantir que temos um hospital válido
-        let hospitalId = 1; // ID padrão para particulares
+        const valor = parseFloat(formData.valor);
+        const { porcentagem, valorRepasse } = calcularValoresRepasse(formData.tipo_procedimento_detalhado, valor);
+
+        let hospitalId = 1;
         if (hospitais.length > 0) {
           hospitalId = hospitais[0].id;
         }
-        
+
         result = await dbHelpers.createRepasse({
           medico_id: parseInt(formData.medico_id),
           nome_paciente: formData.nome_paciente,
           hospital_id: hospitalId,
           data_cirurgia: formData.data_cirurgia,
-          valor: valorTotal,
-          tipo: tipo,
+          valor: valor,
+          tipo: 'consulta',
           is_particular: true,
-          month_reference: formData.month_reference // NOVO CAMPO
+          tipo_procedimento_detalhado: formData.tipo_procedimento_detalhado,
+          porcentagem_repasse: porcentagem,
+          valor_repasse_medico: valorRepasse,
+          month_reference: formData.month_reference
         });
       }
 
       if (result.error) {
         console.error('Erro:', result.error);
       } else {
-        // Reset form data
         setFormDataConvenio({
           medico_id: '',
           convenio_id: '',
@@ -177,20 +182,18 @@ export const RepasseComponent: React.FC = () => {
           data_cirurgia: '',
           valor: '',
           tipo: 'consulta',
-          month_reference: selectedMonth // Reset para o mês atual
+          month_reference: selectedMonth
         });
-        
+
         setFormData({
           medico_id: '',
           nome_paciente: '',
           data_cirurgia: '',
-          tipo_procedimento: 'consulta',
-          quantidade: '1',
-          forma_pagamento: 'pix',
-          valor_unitario: '',
-          month_reference: selectedMonth // Reset para o mês atual
+          tipo_procedimento_detalhado: 'consulta',
+          valor: '',
+          month_reference: selectedMonth
         });
-        
+
         setShowForm(false);
         loadData();
       }
@@ -210,7 +213,7 @@ export const RepasseComponent: React.FC = () => {
 
   const confirmDelete = async () => {
     if (!deletingId) return;
-    
+
     setDeleteLoading(true);
     try {
       const result = await dbHelpers.deleteRepasse(deletingId);
@@ -229,66 +232,26 @@ export const RepasseComponent: React.FC = () => {
     setActiveView('form');
   };
 
-  // Verificar se o usuário tem acesso ao repasse particular
   const hasParticularAccess = user?.email === 'rayannyrego@gmail.com';
 
-  const filteredRepasses = repasses.filter(repasse => 
+  const filteredRepasses = repasses.filter(repasse =>
     activeTab === 'convenio' ? !repasse.is_particular : repasse.is_particular
   );
 
-  // Separar repasses particulares por categoria
-  const repassesConsultaOnda = filteredRepasses.filter(r => r.categoria_particular === 'consulta_onda');
-  const repassesInfiltracao = filteredRepasses.filter(r => r.categoria_particular === 'infiltracao_cirurgia');
-  
-  const totalConsultaOnda = repassesConsultaOnda.reduce((sum, item) => sum + item.valor, 0);
-  const totalInfiltracao = repassesInfiltracao.reduce((sum, item) => sum + item.valor, 0);
-  const totalPeriodo = activeTab === 'convenio' ? filteredRepasses.reduce((sum, item) => sum + item.valor, 0) : totalConsultaOnda + totalInfiltracao;
-
-  // Calcular taxas para consulta/onda de choque (16,33% + taxa pagamento)
-  const calcularTaxasConsultaOnda = () => {
-    const taxaNotaFiscal = 0.1633; // 16,33%
-    let totalTaxas = 0;
-    
-    repassesConsultaOnda.forEach(repasse => {
-      let taxaPagamento = 0;
-      switch (repasse.forma_pagamento) {
-        case 'credito': taxaPagamento = 0.025; break; // 2,5%
-        case 'debito': taxaPagamento = 0.018; break;  // 1,8%
-        case 'pix':
-        case 'especie': taxaPagamento = 0; break;     // 0%
-      }
-      totalTaxas += repasse.valor * (taxaNotaFiscal + taxaPagamento);
-    });
-    
-    return totalTaxas;
+  const getTipoProcedimentoLabel = (tipo?: string) => {
+    const labels: { [key: string]: string } = {
+      'consulta': 'Consulta (16,33%)',
+      'infiltracao': 'Infiltração (40%)',
+      'onda_choque': 'Onda de Choque (30%)',
+      'cirurgia_particular': 'Cirurgia Particular (2%)',
+      'medico_parceiro': 'Médico Parceiro (50%)'
+    };
+    return labels[tipo || ''] || tipo || '-';
   };
-
-  // Calcular taxas para infiltração/cirurgia (10,93% + taxa pagamento)
-  const calcularTaxasInfiltracao = () => {
-    const taxaNotaFiscal = 0.1093; // 10,93%
-    let totalTaxas = 0;
-    
-    repassesInfiltracao.forEach(repasse => {
-      let taxaPagamento = 0;
-      switch (repasse.forma_pagamento) {
-        case 'credito': taxaPagamento = 0.025; break; // 2,5%
-        case 'debito': taxaPagamento = 0.018; break;  // 1,8%
-        case 'pix':
-        case 'especie': taxaPagamento = 0; break;     // 0%
-      }
-      totalTaxas += repasse.valor * (taxaNotaFiscal + taxaPagamento);
-    });
-    
-    return totalTaxas;
-  };
-
-  const taxasConsultaOnda = calcularTaxasConsultaOnda();
-  const taxasInfiltracao = calcularTaxasInfiltracao();
 
   if (activeView === 'report') {
     return (
       <div className="space-y-6">
-        {/* Navigation */}
         <div className="flex gap-2">
           <button
             onClick={() => setActiveView('form')}
@@ -298,7 +261,6 @@ export const RepasseComponent: React.FC = () => {
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1">
           <nav className="-mb-px flex space-x-8">
             <button
@@ -334,7 +296,7 @@ export const RepasseComponent: React.FC = () => {
           onDelete={handleDelete}
           onNew={handleNew}
           hasParticularAccess={hasParticularAccess}
-          selectedMonth={selectedMonth} // NOVO: Passar o mês selecionado
+          selectedMonth={selectedMonth}
         />
 
         <EditRepasseModal
@@ -358,16 +320,14 @@ export const RepasseComponent: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Section - MODIFICADO */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-2 rounded-lg">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 p-2 rounded-lg">
             <CreditCard className="h-6 w-6 text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Controle de Repasse</h2>
-            
-            {/* NOVO: Seletor de Mês */}
+
             <div className="relative mt-1">
               <button
                 onClick={() => setShowMonthSelector(!showMonthSelector)}
@@ -390,8 +350,8 @@ export const RepasseComponent: React.FC = () => {
                         setShowMonthSelector(false);
                       }}
                       className={`w-full text-left px-4 py-2 hover:bg-blue-50 transition-colors ${
-                        month.value === selectedMonth 
-                          ? 'bg-blue-100 text-blue-700 font-medium' 
+                        month.value === selectedMonth
+                          ? 'bg-blue-100 text-blue-700 font-medium'
                           : 'text-gray-700'
                       }`}
                     >
@@ -421,7 +381,6 @@ export const RepasseComponent: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1">
         <nav className="-mb-px flex space-x-8">
           <button
@@ -457,14 +416,13 @@ export const RepasseComponent: React.FC = () => {
             {activeTab === 'convenio' ? (
               <Building className="h-5 w-5 text-blue-600" />
             ) : (
-              <UserCheck className="h-5 w-5 text-purple-600" />
+              <UserCheck className="h-5 w-5 text-green-600" />
             )}
             <h3 className="text-lg font-semibold text-gray-900">
               Novo Repasse {activeTab === 'convenio' ? 'por Convênio' : 'Particular'}
             </h3>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* NOVO CAMPO: Mês de Referência */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <div className="flex items-center gap-2">
@@ -543,19 +501,20 @@ export const RepasseComponent: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <div className="flex items-center gap-2">
                     <Stethoscope size={16} />
-                    Tipo de Atendimento
+                    Tipo de Procedimento
                   </div>
                 </label>
                 <select
-                  value={formData.tipo_procedimento}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tipo_procedimento: e.target.value as 'consulta' | 'onda_choque' | 'infiltracao' | 'cirurgia' }))}
+                  value={formData.tipo_procedimento_detalhado}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tipo_procedimento_detalhado: e.target.value as any }))}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   required
                 >
-                  <option value="consulta">🩺 Consulta</option>
-                  <option value="onda_choque">🌊 Onda de Choque</option>
-                  <option value="infiltracao">💉 Infiltração</option>
-                  <option value="cirurgia">✂️ Cirurgia</option>
+                  <option value="consulta">Consulta (16,33%)</option>
+                  <option value="infiltracao">Infiltração (40%)</option>
+                  <option value="onda_choque">Onda de Choque (30%)</option>
+                  <option value="cirurgia_particular">Cirurgia Particular (2%)</option>
+                  <option value="medico_parceiro">Médico Parceiro (50%)</option>
                 </select>
               </div>
             )}
@@ -648,50 +607,24 @@ export const RepasseComponent: React.FC = () => {
                 </div>
               </>
             ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantidade
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.quantidade}
-                    onChange={(e) => setFormData(prev => ({ ...prev, quantidade: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Forma de Pagamento
-                  </label>
-                  <select
-                    value={formData.forma_pagamento}
-                    onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value as 'credito' | 'pix' | 'debito' | 'especie' }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  >
-                    <option value="pix">PIX</option>
-                    <option value="credito">Cartão de Crédito</option>
-                    <option value="debito">Cartão de Débito</option>
-                    <option value="especie">Espécie</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Valor Unitário
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.valor_unitario}
-                    onChange={(e) => setFormData(prev => ({ ...prev, valor_unitario: e.target.value }))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
-                  />
-                </div>
-              </>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Valor Total
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  required
+                />
+                {formData.valor && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Repasse: R$ {calcularValoresRepasse(formData.tipo_procedimento_detalhado, parseFloat(formData.valor || '0')).valorRepasse.toFixed(2)}
+                  </p>
+                )}
+              </div>
             )}
 
             <div className="md:col-span-2 flex gap-3 pt-4">
@@ -720,7 +653,7 @@ export const RepasseComponent: React.FC = () => {
             Repasses {activeTab === 'convenio' ? 'por Convênio' : 'Particulares'} de {formatSelectedMonth(selectedMonth)}
           </h3>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -729,16 +662,18 @@ export const RepasseComponent: React.FC = () => {
                 {activeTab === 'convenio' && (
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Convênio</th>
                 )}
-                {activeTab === 'convenio' && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo</th>
-                )}
                 {activeTab === 'particular' && (
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tipo Procedimento</th>
                 )}
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Paciente</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Hospital</th>
+                {activeTab === 'convenio' && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Hospital</th>
+                )}
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Data</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Valor</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Valor Total</th>
+                {activeTab === 'particular' && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Valor Repasse</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -760,57 +695,24 @@ export const RepasseComponent: React.FC = () => {
                       </div>
                     </td>
                   )}
-                  {activeTab === 'convenio' && (
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                        repasse.tipo === 'cirurgia' 
-                          ? 'bg-red-100 text-red-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {repasse.tipo === 'cirurgia' ? (
-                          <>
-                            <Scissors size={12} />
-                            Cirurgia
-                          </>
-                        ) : (
-                          <>
-                            <Stethoscope size={12} />
-                            Consulta
-                          </>
-                        )}
-                      </span>
-                    </td>
-                  )}
                   {activeTab === 'particular' && (
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 w-fit ${
-                        repasse.tipo === 'cirurgia' 
-                          ? 'bg-red-100 text-red-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {repasse.tipo === 'cirurgia' ? (
-                          <>
-                            <Scissors size={12} />
-                            Cirurgia
-                          </>
-                        ) : (
-                          <>
-                            <Stethoscope size={12} />
-                            Consulta
-                          </>
-                        )}
+                      <span className="text-sm text-gray-700 font-medium">
+                        {getTipoProcedimentoLabel(repasse.tipo_procedimento_detalhado)}
                       </span>
                     </td>
                   )}
                   <td className="px-6 py-4 text-gray-700">{repasse.nome_paciente}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-purple-100 p-1.5 rounded-full">
-                        <Hospital size={14} className="text-purple-600" />
+                  {activeTab === 'convenio' && (
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-orange-100 p-1.5 rounded-full">
+                          <Hospital size={14} className="text-orange-600" />
+                        </div>
+                        <span className="text-gray-700">{repasse.hospital?.nome}</span>
                       </div>
-                      <span className="text-gray-700">{repasse.hospital?.nome}</span>
-                    </div>
-                  </td>
+                    </td>
+                  )}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Calendar size={14} className="text-gray-400" />
@@ -818,8 +720,15 @@ export const RepasseComponent: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-bold text-green-600 text-lg">R$ {repasse.valor.toFixed(2)}</span>
+                    <span className="font-bold text-gray-900 text-lg">R$ {repasse.valor.toFixed(2)}</span>
                   </td>
+                  {activeTab === 'particular' && (
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-green-600 text-lg">
+                        R$ {(repasse.valor_repasse_medico || 0).toFixed(2)}
+                      </span>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
